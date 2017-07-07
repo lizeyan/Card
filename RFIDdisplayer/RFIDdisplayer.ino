@@ -21,7 +21,7 @@
 MFRC522 mfrc522(SS_PIN, RST_PIN);   // Create MFRC522 instance
 
 /*在这里修改卡号，读取的卡号是16进制的，每2位前加0x   */
-#define NEW_UID {0x31, 0x0D, 0x6B, 0x45}
+#define NEW_UID {0xF1, 0x0D, 0x6B, 0x45}
 
 MFRC522::MIFARE_Key key;
 
@@ -40,39 +40,59 @@ void setup() {
 
 // Setting the UID can be as simple as this:
 void loop() {
-
-  // Look for new cards, and select one if present
+//  // Look for new cards, and select one if present
   if ( ! mfrc522.PICC_IsNewCardPresent() || ! mfrc522.PICC_ReadCardSerial() ) {
     delay(50);
     return;
   }
 
-  // Now a card is selected. The UID and SAK is in mfrc522.uid.
-
-  // Dump UID
-  Serial.print(F("Card UID:"));
-  for (byte i = 0; i < mfrc522.uid.size; i++) {
-    Serial.print(mfrc522.uid.uidByte[i] < 0x10 ? " 0" : " ");
-    Serial.print(mfrc522.uid.uidByte[i], HEX);
-  } 
+  
+  byte buffer_size = 100;
+  byte *first = new byte[buffer_size];
+  mfrc522.MIFARE_Read(0, first, &buffer_size);
+  for (int i = 0; i < buffer_size; ++i)
+    Serial.print(first[i], HEX);
   Serial.println();
 
-  // Set new UID
-  byte newUid[] = NEW_UID;
-  if ( mfrc522.MIFARE_SetUid(newUid, (byte)4, true) ) {
-    Serial.println(F("Wrote new UID to card."));
+  for (int i = 0; i < 20; i+= 2)
+    first[i] = i;
+  int status = mfrc522.MIFARE_Write(0, first, buffer_size);
+  if (status != mfrc522.STATUS_OK) {
+      Serial.print(F("MIFARE_Write() failed: "));
+      Serial.println(mfrc522.GetStatusCodeName(status));
   }
-
-  // Halt PICC and re-select it so DumpToSerial doesn't get confused
-  mfrc522.PICC_HaltA();
-  if ( ! mfrc522.PICC_IsNewCardPresent() || ! mfrc522.PICC_ReadCardSerial() ) {
-    return;
-  }
-
-  // Dump the new memory contents
-  Serial.println(F("New UID and contents:"));
-  mfrc522.PICC_DumpToSerial(&(mfrc522.uid));
-
-  delay(2000);
+  
+  mfrc522.MIFARE_Read(0, first, &buffer_size);
+  for (int i = 0; i < buffer_size; ++i)
+    Serial.print(first[i], HEX);
+  Serial.println();
+//
+//  // Now a card is selected. The UID and SAK is in mfrc522.uid.
+//
+//  // Dump UID
+//  Serial.print(F("Card UID:"));
+//  for (byte i = 0; i < mfrc522.uid.size; i++) {
+//    Serial.print(mfrc522.uid.uidByte[i] < 0x10 ? " 0" : " ");
+//    Serial.print(mfrc522.uid.uidByte[i], HEX);
+//  } 
+//  Serial.println();
+//
+//  // Set new UID
+//  byte newUid[] = NEW_UID;
+//  if ( mfrc522.MIFARE_SetUid(newUid, (byte)4, true) ) {
+//    Serial.println(F("Wrote new UID to card."));
+//  }
+//
+//  // Halt PICC and re-select it so DumpToSerial doesn't get confused
+//  mfrc522.PICC_HaltA();
+//  if ( ! mfrc522.PICC_IsNewCardPresent() || ! mfrc522.PICC_ReadCardSerial() ) {
+//    return;
+//  }
+//
+//  // Dump the new memory contents
+//  Serial.println(F("New UID and contents:"));
+//  mfrc522.PICC_DumpToSerial(&(mfrc522.uid));
+//
+//  delay(2000);
 }
 
