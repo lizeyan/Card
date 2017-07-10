@@ -6,7 +6,14 @@ import logging
 
 class CardCommunicator(threading.Thread):
     """
-    input protocol: "(command name in upper case)\s+(data)?\n"
+    communication protocol: "(command name in upper case)\s+(data)?\n"
+    known instruction:
+        ARRIVAL {uid} # new card selected
+        LEAVE  # card missing
+        APPENDLOG {timestamp: uint32} {+/-: bit} {amount: uint32(real amount * 100)} {location: 32bytes}  # write a log
+        LOG {timestamp: uint32} {+/-: bit(0/1)} {amount: uint32(real amount * 100)} {location: 32bytes string}  # send a log to terminal
+        CLEAR # clean all log
+
     """
     def __init__(self):
         self.handler_dict = {}
@@ -23,8 +30,12 @@ class CardCommunicator(threading.Thread):
             if not match:
                 continue
             command = match.group("command")
+            data = match.group("data")
             if command in self.handler_dict:
-                self.handler_dict[command](match.group("data"))
+                if data != "":
+                    self.handler_dict[command](data)
+                else:
+                    self.handler_dict[command]()
 
     def send(self, msg):
         pass

@@ -54,6 +54,14 @@ class DataSession(object):
         logging.debug("Response of {method} {url}: {rsp}".format(method="POST", url=url, rsp=rsp.text))
         return rsp.json()
 
+    def put_card(self, uid: str = "", url: str = "", data: dict=None):
+        assert uid != "" or url != "", "uid and url can't both be empty. At lease one of them must be given."
+        if url == "":
+            url = self.query_card(uid)["url"]
+        rsp = requests.put(url, data=data, headers={"Authorization": "JWT " + self.token})
+        logging.debug("Response of {method} {url}: {rsp}".format(method="PUT", url=url, rsp=rsp.text))
+        return rsp.json()
+
 if __name__ == '__main__':
     data_session = DataSession()
     print(data_session.authentication("root", "123xuimiao"))

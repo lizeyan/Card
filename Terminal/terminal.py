@@ -1,5 +1,6 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from tkinter import *
+from tkinter import messagebox
 import logging
 import settings
 import requests
@@ -36,29 +37,23 @@ class Terminal(object):
         # setup main frame
         self.main_frame = Frame(self.frame)
         self.create_btn = Button(self.main_frame, text="Create")
-        self.update_btn = Button(self.main_frame, text="Update")
+        self.update_btn = Button(self.main_frame, text="Update", command=self.update_card)
         self.delete_btn = Button(self.main_frame, text="Delete")
         self.consume_btn = Button(self.main_frame, text="Consume")
         self.recharge_btn = Button(self.main_frame, text="Recharge")
         self.delta_amount = DoubleVar()
-        self.amount_edit = Entry(self.main_frame, text=self.delta_amount)
+        self.delta_amount_edit = Entry(self.main_frame, text=self.delta_amount)
         self.student_name = StringVar()
-        self.student_name.set(u"李则言")
         self.student_id = StringVar()
-        self.student_id.set("2014011292")
         self.valid_duration_start = StringVar()
-        self.valid_duration_start.set(str(datetime.now()))
         self.valid_duration_end = StringVar()
-        self.valid_duration_end.set(str(datetime.fromtimestamp(datetime.now().timestamp() + 100000)))
+        self.status_string = StringVar()
         self.balance = DoubleVar()
-        self.balance.set(0)
-        self.card_read_status = StringVar()
-        self.card_read_status.set("No Card")
 
         self.create_btn.grid(row=0, column=0)
         self.delete_btn.grid(row=1, column=0)
         self.update_btn.grid(row=2, column=0)
-        self.amount_edit.grid(row=3, column=0)
+        self.delta_amount_edit.grid(row=3, column=0)
         self.consume_btn.grid(row=4, column=0)
         self.recharge_btn.grid(row=5, column=0)
         Label(self.main_frame, textvariable=self.student_name).grid(row=0, column=1)
@@ -66,10 +61,15 @@ class Terminal(object):
         Label(self.main_frame, textvariable=self.valid_duration_start).grid(row=2, column=1)
         Label(self.main_frame, textvariable=self.valid_duration_end).grid(row=3, column=1)
         Label(self.main_frame, textvariable=self.balance).grid(row=4, column=1)
+        Label(self.main_frame, textvariable=self.status_string).grid(row=6, column=0, columnspan=2)
 
         # card reader setting
-        self.card_reader.register("ARRIVAL", self.new_card_arrival_handler)
+        self.uid = ""
+        self.student_info = {}
+        self.card_reader.register("ARRIVAL", self.card_arrival_handler)
+        self.card_reader.register("LEAVE", self.card_leave_handler)
 
+        self.card_leave_handler()
         self.frame.mainloop()
 
     def try_to_login(self):
@@ -85,13 +85,53 @@ class Terminal(object):
         self.login_frame.grid_forget()
         self.main_frame.grid()
 
-    def new_card_arrival_handler(self, uid):
-        info = self.data_session.query_card(uid)
-        self.student_name.set(info["name"])
-        self.student_id.set(info["student_id"])
-        self.valid_duration_start.set(info["begin_time"])
-        self.valid_duration_end.set(info["end_time"])
-        self.balance.set(info["card_money"])
+    def card_arrival_handler(self, uid):
+        logging.debug("Card {uid} arrived.".format(uid=uid))
+        self.student_info = self.data_session.query_card(uid)
+        self.uid = uid
+        self.student_name.set(self.student_info["name"])
+        self.student_id.set(self.student_info["student_id"])
+        self.valid_duration_start.set(self.student_info["begin_time"])
+        self.valid_duration_end.set(self.student_info["end_time"])
+        self.balance.set(self.student_info["card_money"])
+        self.status_string.set("Card {uid} arrived.".format(uid=uid))
+
+    def card_leave_handler(self):
+        logging.debug("card {uid} left.".format(uid=self.uid))
+        self.status_string.set("Card {uid} left.".format(uid=self.uid))
+        self.uid = ""
+        self.student_name.set("Name")
+        self.student_id.set("Id")
+        self.valid_duration_start.set("Valid Duration")
+        self.valid_duration_end.set("Valid Duration")
+        self.balance.set(0.0)
+
+    def update_card(self):
+        if self.uid == "":
+            messagebox.showerror("ERROR", "There is no card.")
+            return
+        time_point = datetime.strptime(self.student_info["end_time"], "%Y-%m-%dT%H:%M:%S")
+        time_point += timedelta(weeks=18)
+        self.data_session.put_card(self.uid, self.student_info["url"], {"end_time": time_point.strftime("%Y-%m-%dT%H:%M:%S")})
+        self.card_arrival_handler(self.uid)
+        self.status_string.set("Updated valid duration {begin}, {end}".format(begin=self.student_info["start_time"], end=self.student_info["end_time"]))
+
+    def card_recharge(self):
+        if self.uid == "":
+            messagebox.showerror("ERROR", "There is no card.")
+            return
+        self.data_session.increase_money(self.uid, self.delta_amount.get())
+        self.card_arrival_handler(self.uid)
+        self.status_string.set(u"Recharge ￥{amount}".format(amount=self.delta_amount.get()))
+
+    def card_consume(self):
+        if self.uid == "":
+            messagebox.showerror("ERROR", "There is no card.")
+            return
+        self.data_session.decrease_money(self.uid, self.delta_amount.get())
+        self.card_arrival_handler(self.uid)
+        self.status_string.set(u"Consume ￥{amount}".format(amount=self.delta_amount.get()))
+
 
 if __name__ == '__main__':
     logging.debug("Application start")
