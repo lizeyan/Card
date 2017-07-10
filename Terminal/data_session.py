@@ -44,23 +44,30 @@ class DataSession(object):
 
     def increase_money(self, uid, money):
         url = settings.HOST + "card/increase_money/"
-        rsp = requests.post(url, params={"card_id": uid, "money": money}, headers={"Authorization": "JWT " + self.token})
+        rsp = requests.post(url, json={"card_id": uid, "money": money}, headers={"Authorization": "JWT " + self.token})
         logging.debug("Response of {method} {url}: {rsp}".format(method="POST", url=url, rsp=rsp.text))
         return rsp.json()
 
     def decrease_money(self, uid, money):
         url = settings.HOST + "card/decrease_money/"
-        rsp = requests.post(url, params={"card_id": uid, "money": money}, headers={"Authorization": "JWT " + self.token})
+        rsp = requests.post(url, json={"card_id": uid, "money": money}, headers={"Authorization": "JWT " + self.token})
         logging.debug("Response of {method} {url}: {rsp}".format(method="POST", url=url, rsp=rsp.text))
         return rsp.json()
 
-    def put_card(self, uid: str = "", url: str = "", data: dict=None):
-        assert uid != "" or url != "", "uid and url can't both be empty. At lease one of them must be given."
+    def put_card(self, uid: str, url: str = "", data: dict=None):
         if url == "":
             url = self.query_card(uid)["url"]
         rsp = requests.put(url, data=data, headers={"Authorization": "JWT " + self.token})
-        logging.debug("Response of {method} {url}: {rsp}".format(method="PUT", url=url, rsp=rsp.text))
+        logging.debug("Response of {method} {url} {data}: {rsp}".format(method="PUT", url=url, rsp=rsp.text, data=data))
         return rsp.json()
+
+    def delete_card(self, uid: str, url: str = ""):
+        if url == "":
+            url = self.query_card(uid)["url"]
+        rsp = requests.put(url, data={"card_id": ""}, headers={"Authorization": "JWT " + self.token})
+        logging.debug("Response of {method} {url} : {rsp}".format(method="PUT", url=url, rsp=rsp.text))
+        return rsp.json()
+
 
 if __name__ == '__main__':
     data_session = DataSession()
