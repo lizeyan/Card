@@ -28,6 +28,7 @@
  */
 
 #include <SPI.h>
+#include <String.h>
 #include "MFRC522.h"
 
 constexpr uint8_t RST_PIN = 9;     // Configurable, see typical pin layout above
@@ -36,6 +37,8 @@ constexpr uint8_t SS_PIN = 10;     // Configurable, see typical pin layout above
 MFRC522 mfrc522(SS_PIN, RST_PIN);   // Create MFRC522 instance.
 
 MFRC522::MIFARE_Key key;
+
+String command;
 
 /**
  * Initialize.
@@ -58,12 +61,63 @@ void setup() {
     Serial.println();
     
     Serial.println(F("BEWARE: Data will be written to the PICC, in sector #1"));
+    command = "";
 }
 
 /**
  * Main loop.
  */
 void loop() {
+    char typechar = "n";
+    char tmpchar;
+//    command = "";
+    if(Serial.available() > 0)
+    {
+        command = "";
+    }
+
+    while(Serial.available() > 0){  
+        tmpchar = Serial.read();//读串口第一个字节  
+//      Serial.print("Serial.read: ");  
+//      Serial.println(typechar);  
+        command += tmpchar;
+    }  
+    delay(100); 
+    if(command.length() > 0)
+    {
+//        Serial.print(command);
+//        Serial.println();
+        typechar = command.charAt(0);
+    }
+    else
+    {
+        typechar = 'n';
+    }
+
+    
+//    if(typechar == 'w')
+//    {
+//      Serial.print("writeeeeeeeeee");
+//      Serial.println();
+//    }
+//    else if(typechar == 'r')
+//    {
+//      Serial.print("readddddddddddd");
+//      Serial.println();
+//    }
+//    else if(typechar == 'n')
+//    {
+//      Serial.print("no command");
+//      Serial.println();
+//    }
+//    else
+//    {
+//      Serial.print(typechar);
+//      Serial.print("illegal");
+//      Serial.println();
+//    }
+
+
     // Look for new cards
     if ( ! mfrc522.PICC_IsNewCardPresent())
         return;
@@ -102,14 +156,6 @@ void loop() {
     MFRC522::StatusCode status;
     byte buffer[18];
     byte size = sizeof(buffer);
-    char typechar;
-
-    if(Serial.available() > 0)
-    {
-        typechar = Serial.read();
-    }
-
-    
 
     // Authenticate using key A
     Serial.println(F("Authenticating using key A..."));
@@ -119,24 +165,6 @@ void loop() {
         Serial.println(mfrc522.GetStatusCodeName(status));
         return;
     }    
-
-    // Show the whole sector as it currently is
-    Serial.println(F("Current data in sector:"));
-    mfrc522.PICC_DumpMifareClassicSectorToSerial(&(mfrc522.uid), &key, sector);
-    Serial.println();
-
-    // Read data from the block
-    Serial.print(F("Reading data from block ")); Serial.print(blockAddr);
-    Serial.println(F(" ..."));
-    status = (MFRC522::StatusCode) mfrc522.MIFARE_Read(blockAddr, buffer, &size);
-    if (status != MFRC522::STATUS_OK) {
-        Serial.print(F("MIFARE_Read() failed: "));
-        Serial.println(mfrc522.GetStatusCodeName(status));
-    }
-    Serial.print(F("Data in block ")); Serial.print(blockAddr); Serial.println(F(":"));
-    dump_byte_array(buffer, 16); Serial.println();
-    Serial.println();
-
     // Authenticate using key B
     Serial.println(F("Authenticating again using key B..."));
     status = (MFRC522::StatusCode) mfrc522.PCD_Authenticate(MFRC522::PICC_CMD_MF_AUTH_KEY_B, trailerBlock, &key, &(mfrc522.uid));
@@ -146,7 +174,28 @@ void loop() {
         return;
     }
 
-    // Write data to the block
+    if(typechar == 'r')
+    {
+      // Show the whole sector as it currently is
+      Serial.println(F("Current data in sector:"));
+      mfrc522.PICC_DumpMifareClassicSectorToSerial(&(mfrc522.uid), &key, sector);
+      Serial.println();
+  
+      // Read data from the block
+      Serial.print(F("Reading data from block ")); Serial.print(blockAddr);
+      Serial.println(F(" ..."));
+      status = (MFRC522::StatusCode) mfrc522.MIFARE_Read(blockAddr, buffer, &size);
+      if (status != MFRC522::STATUS_OK) {
+          Serial.print(F("MIFARE_Read() failed: "));
+          Serial.println(mfrc522.GetStatusCodeName(status));
+      }
+      Serial.print(F("Data in block ")); Serial.print(blockAddr); Serial.println(F(":"));
+      dump_byte_array(buffer, 16); Serial.println();
+      Serial.println();
+    }
+  else if(typechar == 'w')
+  {
+        // Write data to the block
     Serial.print(F("Writing data into block ")); Serial.print(blockAddr);
     Serial.println(F(" ..."));
     dump_byte_array(dataBlock, 16); Serial.println();
@@ -156,50 +205,54 @@ void loop() {
         Serial.println(mfrc522.GetStatusCodeName(status));
     }
     Serial.println();
+  }
 
-    // Read data from the block (again, should now be what we have written)
-    Serial.print(F("Reading data from block ")); Serial.print(blockAddr);
-    Serial.println(F(" ..."));
-    status = (MFRC522::StatusCode) mfrc522.MIFARE_Read(blockAddr, buffer, &size);
-    if (status != MFRC522::STATUS_OK) {
-        Serial.print(F("MIFARE_Read() failed: "));
-        Serial.println(mfrc522.GetStatusCodeName(status));
-    }
-    Serial.print(F("Data in block ")); Serial.print(blockAddr); Serial.println(F(":"));
-    dump_byte_array(buffer, 16); Serial.println();
-        
-    // Check that data in block is what we have written
-    // by counting the number of bytes that are equal
-    Serial.println(F("Checking result..."));
-    byte count = 0;
-    for (byte i = 0; i < 16; i++) {
-        // Compare buffer (= what we've read) with dataBlock (= what we've written)
-        if (buffer[i] == dataBlock[i])
-            count++;
-    }
-    Serial.print(F("Number of bytes that match = ")); Serial.println(count);
-    if (count == 16) {
-        Serial.println(F("Success :-)"));
-    } else {
-        Serial.println(F("Failure, no match :-("));
-        Serial.println(F("  perhaps the write didn't work properly..."));
-    }
-    Serial.println();
-        
+
+
+//
+//    // Read data from the block (again, should now be what we have written)
+//    Serial.print(F("Reading data from block ")); Serial.print(blockAddr);
+//    Serial.println(F(" ..."));
+//    status = (MFRC522::StatusCode) mfrc522.MIFARE_Read(blockAddr, buffer, &size);
+//    if (status != MFRC522::STATUS_OK) {
+//        Serial.print(F("MIFARE_Read() failed: "));
+//        Serial.println(mfrc522.GetStatusCodeName(status));
+//    }
+//    Serial.print(F("Data in block ")); Serial.print(blockAddr); Serial.println(F(":"));
+//    dump_byte_array(buffer, 16); Serial.println();
+//        
+//    // Check that data in block is what we have written
+//    // by counting the number of bytes that are equal
+//    Serial.println(F("Checking result..."));
+//    byte count = 0;
+//    for (byte i = 0; i < 16; i++) {
+//        // Compare buffer (= what we've read) with dataBlock (= what we've written)
+//        if (buffer[i] == dataBlock[i])
+//            count++;
+//    }
+//    Serial.print(F("Number of bytes that match = ")); Serial.println(count);
+//    if (count == 16) {
+//        Serial.println(F("Success :-)"));
+//    } else {
+//        Serial.println(F("Failure, no match :-("));
+//        Serial.println(F("  perhaps the write didn't work properly..."));
+//    }
+//    Serial.println();
+//        
     // Dump the sector data
-    Serial.println(F("Current data in sector:"));
-    mfrc522.PICC_DumpMifareClassicSectorToSerial(&(mfrc522.uid), &key, sector);
-    Serial.println();
+//    Serial.println(F("Current data in sector:"));
+//    mfrc522.PICC_DumpMifareClassicSectorToSerial(&(mfrc522.uid), &key, sector);
+//    Serial.println();
 
     // Halt PICC
-    mfrc522.PICC_HaltA();
+    mfrc522.PICC_HaltA();                                                                                     
     // Stop encryption on PCD
     mfrc522.PCD_StopCrypto1();
 }
-
-/**
- * Helper routine to dump a byte array as hex values to Serial.
- */
+//
+///**
+// * Helper routine to dump a byte array as hex values to Serial.
+// */
 void dump_byte_array(byte *buffer, byte bufferSize) {
     for (byte i = 0; i < bufferSize; i++) {
         Serial.print(buffer[i] < 0x10 ? " 0" : " ");
