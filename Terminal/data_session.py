@@ -32,13 +32,27 @@ class DataSession(object):
         logging.debug("Response of {method} {url}: {rsp}".format(method="POST", url=url, rsp=rsp.text))
         return rsp.status_code == 200, rsp.json()["status"]
 
-    def query_card(self, uid: str) -> dict:
+    def query_card_by_uid(self, uid: str) -> dict:
         """
         :param uid:
         :return: info dict of the student
         """
         url = settings.HOST + "card/"
         rsp = requests.get(url, params={"card_id": uid}, headers={"Authorization": "JWT " + self.token})
+        logging.debug("Response of {method} {url}: {rsp}".format(method="POST", url=url, rsp=rsp.text))
+        results = rsp.json()["results"]
+        if len(results) > 0:
+            return rsp.json()["results"][0]
+        else:
+            return {}
+
+    def query_card_by_student_id(self, student_id: str) -> dict:
+        """
+        :param student_id:
+        :return: info dict of the student
+        """
+        url = settings.HOST + "card/"
+        rsp = requests.get(url, params={"student_id": student_id}, headers={"Authorization": "JWT " + self.token})
         logging.debug("Response of {method} {url}: {rsp}".format(method="POST", url=url, rsp=rsp.text))
         return rsp.json()["results"][0]
 
@@ -56,15 +70,21 @@ class DataSession(object):
 
     def put_card(self, uid: str, url: str = "", data: dict=None):
         if url == "":
-            url = self.query_card(uid)["url"]
+            url = self.query_card_by_uid(uid)["url"]
         rsp = requests.put(url, data=data, headers={"Authorization": "JWT " + self.token})
         logging.debug("Response of {method} {url} {data}: {rsp}".format(method="PUT", url=url, rsp=rsp.text, data=data))
         return rsp.json()
 
     def delete_card(self, uid: str, url: str = ""):
         if url == "":
-            url = self.query_card(uid)["url"]
+            url = self.query_card_by_uid(uid)["url"]
         rsp = requests.put(url, data={"card_id": ""}, headers={"Authorization": "JWT " + self.token})
+        logging.debug("Response of {method} {url} : {rsp}".format(method="PUT", url=url, rsp=rsp.text))
+        return rsp.json()
+
+    def create_card(self, student_id: str, uid: str):
+        url = self.query_card_by_student_id(student_id)["url"]
+        rsp = requests.put(url, data={"card_id": uid}, headers={"Authorization": "JWT " + self.token})
         logging.debug("Response of {method} {url} : {rsp}".format(method="PUT", url=url, rsp=rsp.text))
         return rsp.json()
 

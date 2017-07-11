@@ -16,7 +16,6 @@ class Terminal(object):
         self.data_session = DataSession()
         self.card_reader = CardCommunicator()
         self.card_reader.setDaemon(True)
-        self.card_reader.start()
 
         # setup login frame
         self.login_frame = Frame(self.frame)
@@ -36,9 +35,9 @@ class Terminal(object):
 
         # setup main frame
         self.main_frame = Frame(self.frame)
-        self.create_btn = Button(self.main_frame, text="Create")
+        self.create_btn = Button(self.main_frame, text="Create", command=self.card_create)
         self.update_btn = Button(self.main_frame, text="Update", command=self.update_card)
-        self.delete_btn = Button(self.main_frame, text="Delete")
+        self.delete_btn = Button(self.main_frame, text="Delete", command=self.card_delete)
         self.consume_btn = Button(self.main_frame, text="Consume", command=self.card_consume)
         self.recharge_btn = Button(self.main_frame, text="Recharge", command=self.card_recharge)
         self.delta_amount = DoubleVar()
@@ -57,7 +56,7 @@ class Terminal(object):
         self.consume_btn.grid(row=4, column=0)
         self.recharge_btn.grid(row=5, column=0)
         Label(self.main_frame, textvariable=self.student_name).grid(row=0, column=1)
-        Label(self.main_frame, textvariable=self.student_id).grid(row=1, column=1)
+        Entry(self.main_frame, textvariable=self.student_id).grid(row=1, column=1)
         Label(self.main_frame, textvariable=self.valid_duration_start).grid(row=2, column=1)
         Label(self.main_frame, textvariable=self.valid_duration_end).grid(row=3, column=1)
         Label(self.main_frame, textvariable=self.balance).grid(row=4, column=1)
@@ -76,6 +75,7 @@ class Terminal(object):
         self.data_session.authentication(self.terminal_name.get(), self.terminal_password.get())
         if self.data_session.token != "":
             self.show_main_frame()
+            self.card_reader.start()
 
     def show_login_frame(self):
         self.main_frame.grid_forget()
@@ -87,13 +87,14 @@ class Terminal(object):
 
     def card_arrival_handler(self, uid):
         logging.debug("Card {uid} arrived.".format(uid=uid))
-        self.student_info = self.data_session.query_card(uid)
+        self.student_info = self.data_session.query_card_by_uid(uid)
         self.uid = uid
-        self.student_name.set(self.student_info["name"])
-        self.student_id.set(self.student_info["student_id"])
-        self.valid_duration_start.set(self.student_info["begin_time"])
-        self.valid_duration_end.set(self.student_info["end_time"])
-        self.balance.set(self.student_info["card_money"])
+        if self.student_info != {}:
+            self.student_name.set(self.student_info["name"])
+            self.student_id.set(self.student_info["student_id"])
+            self.valid_duration_start.set(self.student_info["begin_time"])
+            self.valid_duration_end.set(self.student_info["end_time"])
+            self.balance.set(self.student_info["card_money"])
         self.status_string.set("Card {uid} arrived.".format(uid=uid))
 
     def card_leave_handler(self):
@@ -114,7 +115,7 @@ class Terminal(object):
         time_point += timedelta(weeks=18)
         self.data_session.put_card(self.uid, self.student_info["url"], {"end_time": time_point.strftime("%Y-%m-%dT%H:%M:%S")})
         self.card_arrival_handler(self.uid)
-        self.status_string.set("Updated valid duration {begin}, {end}".format(begin=self.student_info["start_time"], end=self.student_info["end_time"]))
+        self.status_string.set("Updated valid duration {begin}, {end}".format(begin=self.student_info["begin_time"], end=self.student_info["end_time"]))
 
     def card_recharge(self):
         if self.uid == "":
@@ -131,6 +132,21 @@ class Terminal(object):
         self.data_session.decrease_money(self.uid, self.delta_amount.get())
         self.card_arrival_handler(self.uid)
         self.status_string.set(u"Consume ￥{amount}".format(amount=self.delta_amount.get()))
+
+    def card_delete(self):
+        if self.uid == "":
+            messagebox.showerror("ERROR", "There is no card.")
+            return
+        self.data_session.delete_card(self.uid, self.student_info["url"])
+        self.status_string.set("Delete Card {uid}".format(uid=self.uid))
+
+    def card_create(self):
+        if self.uid == "":
+            messagebox.showerror("ERROR", "There is no card.")
+            return
+        self.data_session.create_card(self.student_id.get(), self.uid)
+        self.status_string.set("Create Card {uid} for {student}".format(uid=self.uid, student=self.student_id.get()))
+        self.card_arrival_handler(self.uid)
 
 
 if __name__ == '__main__':
