@@ -10,9 +10,12 @@ class CardCommunicator(threading.Thread):
     known instruction:
         ARRIVAL {uid} # new card selected
         LEAVE  # card missing
+        ASKFORLOG  # when this message is received, the card reader should read and send the logs
         APPENDLOG {timestamp: uint32} {+/-: bit} {amount: uint32(real amount * 100)} {location: 32bytes}  # write a log
         LOG {timestamp: uint32} {+/-: bit(0/1)} {amount: uint32(real amount * 100)} {location: 32bytes string}  # send a log to terminal
         CLEAR # clean all log
+        ACCESSACCEPTED
+        ACCESSDENIED
 
     """
     def __init__(self):
@@ -37,7 +40,7 @@ class CardCommunicator(threading.Thread):
                 else:
                     self.handler_dict[command]()
 
-    def send(self, msg):
-        pass
-
+    @staticmethod
+    def send(msg):
+        print("SEND:", msg)
 

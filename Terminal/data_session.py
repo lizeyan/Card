@@ -1,11 +1,26 @@
 import requests
 import settings
 import logging
+import atexit
+import os
+from datetime import datetime
+from encrypt_pickle import *
 
 
 class DataSession(object):
+    RECENT_ACCESS_LOG_CACHE_PATH = "ACCESS_LOG.pkl"
+    RECENT_ACCESS_LOG_CACHE_MAX_LENGTH = 1000
+
     def __init__(self):
         self.token = ""
+        self.access_log = None  #load_decrypt(self.RECENT_ACCESS_LOG_CACHE_PATH)
+        if self.access_log is None:
+            self.access_log = {}  # key: uid, value: access_time(datetime))
+        atexit.register(self.exit)
+
+    def exit(self):
+        logging.debug("dump to " + self.RECENT_ACCESS_LOG_CACHE_PATH)
+        dump_encrypt(self.access_log, self.RECENT_ACCESS_LOG_CACHE_PATH)
 
     def authentication(self, user_name: str, password: str) -> dict:
         """
@@ -30,7 +45,14 @@ class DataSession(object):
         url = settings.HOST + "card/access/"
         rsp = requests.post(url, json={"card_id": uid}, headers={"Authorization": "JWT " + self.token})
         logging.debug("Response of {method} {url}: {rsp}".format(method="POST", url=url, rsp=rsp.text))
-        return rsp.status_code == 200, rsp.json()["status"]
+        result = rsp.status_code == 200
+        if result:
+            self.access_log[uid] = datetime.now()
+            if len(self.access_log) > self.RECENT_ACCESS_LOG_CACHE_MAX_LENGTH:
+                for k, v in self.access_log.items():
+                    if (datetime.now() - v).total_seconds() > 86400:
+                        del self.access_log[k]
+        return result
 
     def query_card_by_uid(self, uid: str) -> dict:
         """
