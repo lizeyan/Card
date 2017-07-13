@@ -29,6 +29,11 @@ class CardCommunicator(threading.Thread):
         self.handler_dict[command.upper()] = handler
         logging.debug("register {func} to {command}".format(func=handler.__name__, command=command))
 
+    def remove(self, command: str):
+        if command in self.handler_dict:
+            del self.handler_dict[command.upper()]
+        logging.debug("remove {command}".format(command=command))
+
     def run(self):
         for line in sys.stdin:
             match = self.input_line_parser.match(line)

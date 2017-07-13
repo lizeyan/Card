@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import time
 from tkinter import Tk, StringVar, DoubleVar, messagebox, font, Button
 from tkinter.ttk import Label, Entry, Frame, Style
 import logging
@@ -195,8 +196,15 @@ class Terminal(object):
         self.card_arrival_handler(self.uid)
 
     def card_log_show(self):
-        pass
-
+        logs = []
+        self.card_communicator.register("LOG", lambda log: logs.append(log))
+        while len(logs) < 5:
+            time.sleep(0.1)
+        self.card_communicator.remove("LOG")
+        popup = Tk()
+        popup.title("Logs")
+        for idx, log in enumerate(logs):
+            Label(popup, text=log, font=self.custom_font).grid(row=idx, column=0)
 
 if __name__ == '__main__':
     logging.debug("Application start")
