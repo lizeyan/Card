@@ -10,9 +10,11 @@ class CardCommunicator(threading.Thread):
     known instruction:
         ARRIVAL {uid} # new card selected
         LEAVE  # card missing
+        SMALLANSWER {success/fail: bit(0/1)} {now_money: uint32(real amount * 100)} # change small wallet money in card, check it is success or not
         ASKFORLOG  # when this message is received, the card reader should read and send the logs
         APPENDLOG {timestamp: uint32} {+/-: bit} {amount: uint32(real amount * 100)} {location: 32bytes}  # write a log
         LOG {timestamp: uint32} {+/-: bit(0/1)} {amount: uint32(real amount * 100)} {location: 32bytes string}  # send a log to terminal
+        SMALLMONEY {+/-: bit(0/1)} {amount: uint32(real amount * 100)} 
         CLEAR # clean all log
         ACCESSACCEPTED
         ACCESSDENIED
@@ -26,6 +28,11 @@ class CardCommunicator(threading.Thread):
     def register(self, command: str, handler):
         self.handler_dict[command.upper()] = handler
         logging.debug("register {func} to {command}".format(func=handler.__name__, command=command))
+
+    def remove(self, command: str):
+        if command in self.handler_dict:
+            del self.handler_dict[command.upper()]
+        logging.debug("remove {command}".format(command=command))
 
     def run(self):
         for line in sys.stdin:

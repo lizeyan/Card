@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import time
 from tkinter import Tk, StringVar, DoubleVar, messagebox, font, Button
 from tkinter.ttk import Label, Entry, Frame, Style
 import logging
@@ -75,6 +76,7 @@ class Terminal(object):
         self.student_info = {}
         self.card_communicator.register("ARRIVAL", self.card_arrival_handler)
         self.card_communicator.register("LEAVE", self.card_leave_handler)
+        self.card_communicator.register("SMALLANSWER", self.card_small_wallet_handler)
 
         self.card_leave_handler()
         self.status_string.set("Application start")
@@ -152,6 +154,32 @@ class Terminal(object):
         self.card_arrival_handler(self.uid)
         self.status_string.set(u"Consume ￥{amount}".format(amount=self.delta_amount.get()))
 
+    def card_small_wallet_recharge(self):
+        if self.uid == "":
+            messagebox.showerror("ERROR", "There is no card.")
+            return
+        increase_money = self.delta_amount.get()
+        response = self.data_session.decrease_money(self.uid, increase_money)
+        if response['status'] == 'success':
+            self.card_communicator.send("SMALLMONEY 0 " + str(int(increase_money * 100)))
+        else:
+            messagebox.showerror("ERROR", "There is not enough money.")
+
+    def card_small_wallet_consume(self):
+        if self.uid == "":
+            messagebox.showerror("ERROR", "There is no card.")
+            return
+        decrease_money = self.delta_amount.get()
+        self.card_communicator.send("SMALLMONEY 1 " + str(int(decrease_money * 100)))
+
+    def card_small_wallet_handler(self, data):
+        sp = data.strip().split()
+        if sp[0] == '0':
+            now_money = float(sp[1]) / 100
+            messagebox.showinfo(u"info", "Success, now small wallet money ￥{amount}".format(amount=now_money))
+        else:
+            messagebox.showerror("ERROR", "There is not enough money in small wallet.")
+
     def card_delete(self):
         if self.uid == "":
             messagebox.showerror("ERROR", "There is no card.")
@@ -168,8 +196,15 @@ class Terminal(object):
         self.card_arrival_handler(self.uid)
 
     def card_log_show(self):
-        pass
-
+        logs = []
+        self.card_communicator.register("LOG", lambda log: logs.append(log))
+        while len(logs) < 5:
+            time.sleep(0.1)
+        self.card_communicator.remove("LOG")
+        popup = Tk()
+        popup.title("Logs")
+        for idx, log in enumerate(logs):
+            Label(popup, text=log, font=self.custom_font).grid(row=idx, column=0)
 
 if __name__ == '__main__':
     logging.debug("Application start")
