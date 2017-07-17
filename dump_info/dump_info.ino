@@ -288,16 +288,16 @@ void loop() {
         for(int i=0;i<5;i++)
         {   
             Serial.print(F("Reading data from block ")); 
-            Serial.print(blockAddr[(blockAddrNow+i)%5]);
+            Serial.print(blockAddr[(blockAddrNow-i)%5]);
             Serial.println(F(" ..."));
-            AuthenticateA((blockAddrNow+i)%5);
-            status = (MFRC522::StatusCode) mfrc522.MIFARE_Read(blockAddr[(blockAddrNow+i)%5], buffer, &size);
+            AuthenticateA(blockAddr[(blockAddrNow-i)%5]);
+            status = (MFRC522::StatusCode) mfrc522.MIFARE_Read(blockAddr[(blockAddrNow-i)%5], buffer, &size);
             if (status != MFRC522::STATUS_OK) {
                 Serial.print(F("MIFARE_Read() failed: "));
                 Serial.println(mfrc522.GetStatusCodeName(status));
             }
             Serial.print(F("Data in block ")); 
-            Serial.print(blockAddr[(blockAddrNow+i)%5]); 
+            Serial.print(blockAddr[(blockAddrNow-i)%5]); 
             Serial.println(F(":"));
             dump_byte_array(buffer, 16); 
             Serial.println();
@@ -466,5 +466,50 @@ String bytes2String(byte* buffer, byte bufferSize)
         char c = (char)(value);
         str += c;
     }
+    return str;
+}
+
+String bytes2Loginfo(byte* buffer, byte bufferSize)
+{
+//    dataBlock[0] = (byte)(appendLogInt);
+//    dataBlock[1] = (byte)(appendLogInt >> 8);
+//    dataBlock[2] = (byte)(appendLogInt >> 16);
+//    dataBlock[3] = (byte)(appendLogInt >> 24);
+//    dataBlock[4] = (byte)(appendLogBit);
+//    dataBlock[5] = 1; // 标记是否已有log
+//    dataBlock[8] = (byte)(appendLogAmount);
+//    dataBlock[9] = (byte)(appendLogAmount >> 8);
+//    dataBlock[10] = (byte)(appendLogAmount >> 16);
+//    dataBlock[11] = (byte)(appendLogAmount >> 24);
+
+  
+    String str = "";
+    String nostr = "No log";
+    if(buffer[5] != 1)
+        return nostr;
+    int alint = 0;
+    int albit = 0;
+    int alamount = 0;
+    for(int i=0;i<4;i++)
+    {
+        int value = buffer[i];
+        int c = value<<(8*i);
+        alint += c;
+    }
+    albit = buffer[4];
+    for(int i=0;i<4;i++)
+    {
+        int value = buffer[8+i];
+        int c = value<<(8*i);
+        alamount += c;
+    }
+    str += (String)alint;
+    str += " ";
+    str += (String)albit;
+    str += " ";
+    str += (String)alamount;
+    str += " ";
+    
+    return str;
 }
 
