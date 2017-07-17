@@ -164,7 +164,7 @@ class Terminal(object):
         increase_money = self.delta_amount.get()
         response = self.data_session.decrease_money(self.uid, increase_money)
         if response['status'] == 'success':
-            self.card_communicator.send("SMALLMONEY 0 " + str(int(increase_money * 100)))
+            self.card_communicator.send("SMALLMONEY " + str(int(increase_money * 100)) + " 0")
         else:
             messagebox.showerror("ERROR", "There is not enough money.")
 
@@ -185,7 +185,7 @@ class Terminal(object):
         self.small_wallet_money = now_money
         if self.small_wallet_consume and self.small_wallet_decrease_money != None:
             if self.small_wallet_decrease_money <= now_money:
-                self.card_communicator.send("SMALLMONEY 1 " + str(int(self.small_wallet_decrease_money * 100)))
+                self.card_communicator.send("SMALLMONEY " + str(int(self.small_wallet_decrease_money * 100)) + " 1")
                 self.small_wallet_money -= self.small_wallet_decrease_money
             else:
                 messagebox.showerror("ERROR", "There is no enough money in small wallet.")
