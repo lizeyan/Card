@@ -457,3 +457,14 @@ void AuthenticateA(byte blocknum)
       }    
 }
 
+String bytes2String(byte* buffer, byte bufferSize)
+{
+    String str = "";
+    for(int i=0;i<bufferSize;i++)
+    {
+        int value = buffer[i];
+        char c = (char)(value);
+        str += c;
+    }
+}
+
