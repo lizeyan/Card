@@ -55,6 +55,9 @@ class Terminal(object):
         self.valid_duration_end = StringVar()
         self.status_string = StringVar()
         self.balance = DoubleVar()
+        self.small_wallet_money = DoubleVar()
+        self.small_wallet_decrease_money = None
+        self.small_wallet_consume = False
 
         self.create_btn.grid(row=0, column=0)
         self.delete_btn.grid(row=1, column=0)
@@ -169,16 +172,25 @@ class Terminal(object):
         if self.uid == "":
             messagebox.showerror("ERROR", "There is no card.")
             return
-        decrease_money = self.delta_amount.get()
-        self.card_communicator.send("SMALLMONEY 1 " + str(int(decrease_money * 100)))
+        self.small_wallet_decrease_money = self.delta_amount.get()
+        self.small_wallet_consume = True
+        self.card_communicator.send("SMALLQUERY")
 
     def card_small_wallet_handler(self, data):
         sp = data.strip().split()
-        if sp[0] == '0':
-            now_money = float(sp[1]) / 100
-            messagebox.showinfo(u"info", "Success, now small wallet money ￥{amount}".format(amount=now_money))
-        else:
-            messagebox.showerror("ERROR", "There is not enough money in small wallet.")
+        now_money = float(sp[1]) / 100
+        if self.uid == "":
+            messagebox.showerror("ERROR", "There is no card.")
+            return
+        self.small_wallet_money = now_money
+        if self.small_wallet_consume and self.small_wallet_decrease_money != None:
+            if self.small_wallet_decrease_money <= now_money:
+                self.card_communicator.send("SMALLMONEY 1 " + str(int(self.small_wallet_decrease_money * 100)))
+                self.small_wallet_money -= self.small_wallet_decrease_money
+            else:
+                messagebox.showerror("ERROR", "There is no enough money in small wallet.")
+            self.small_wallet_consume = False
+            self.small_wallet_decrease_money = None
 
     def card_delete(self):
         if self.uid == "":
