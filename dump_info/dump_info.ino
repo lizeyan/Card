@@ -121,7 +121,7 @@ void loop() {
     {
         command.trim();
         commandName = command.substring(0, command.indexOf(' '));
-        if(commandName.equals("APPENDLOG"))
+        if(commandName.equals("APPENDLOG") || commandName.equals("SMALLMONEY"))
         {
           String appendStr = command.substring(command.indexOf(' '));
           appendStr.trim();
@@ -136,12 +136,12 @@ void loop() {
           appendStr4.trim();
           appendLogLocation = appendStr4;          
 
-//          Serial.print("command:");
-//          Serial.println(command);
-//          Serial.print("int:");
-//          Serial.println(appendLogInt);
-//          Serial.print("Bit:");
-//          Serial.println(appendLogBit);
+          Serial.print("command:");
+          Serial.println(command);
+          Serial.print("int:");
+          Serial.println(appendLogInt);
+          Serial.print("Bit:");
+          Serial.println(appendLogBit);
 //          Serial.print("Amount:");
 //          Serial.println(appendLogAmount);
 //          Serial.print("Location:");
@@ -190,6 +190,18 @@ void loop() {
     byte sector         = 1;
     byte blockAddr[]      = {4, 5, 6, 8, 9};
     byte locAddr[]      = {12, 16, 20, 24, 28}; // 每个string放在单独的扇区中，分配2块，最多32字节，即32个字符
+    byte smallWalletAddr = 32;
+    byte smallBlock[]    = {
+        0x00, 0x00, 0x00, 0x00, //  amount
+        0x00, 0x00, 0x00, 0x00, //  +/-
+        0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00
+    };
+    smallBlock[0] = (byte)(appendLogInt);
+    smallBlock[1] = (byte)(appendLogInt >> 8);
+    smallBlock[2] = (byte)(appendLogInt >> 16);
+    smallBlock[3] = (byte)(appendLogInt >> 24);
+    smallBlock[4] = (byte)(appendLogBit);
     
     
     byte blockAddrNow     = 0;
@@ -300,6 +312,7 @@ void loop() {
             Serial.print(blockAddr[(blockAddrNow-i)%5]); 
             Serial.println(F(":"));
             dump_byte_array(buffer, 16); 
+            Serial.println(bytes2Loginfo(buffer, 16));
             Serial.println();
             Serial.println(); 
         }
@@ -355,26 +368,67 @@ void loop() {
             Serial.print(F("MIFARE_Write() failed: "));
             Serial.println(mfrc522.GetStatusCodeName(status));
         }
-      blockAddrNow = (blockAddrNow + 1) % 5;
-      byte paraBlock[]    = {
-          0x00, 0x00, 0x00, 0x00,
-          0x00, 0x00, 0x00, 0x00,
-          0x00, 0x00, 0x00, 0x00,
-          0x00, 0x00, 0x00, 0x00
-      };
-      paraBlock[0] = blockAddrNow;
-      Authenticate(32);
-      status = (MFRC522::StatusCode) mfrc522.MIFARE_Write(32, paraBlock, 16);
-      if (status != MFRC522::STATUS_OK) {
-          Serial.print(F("MIFARE_Write() failed: "));
-          Serial.println(mfrc522.GetStatusCodeName(status));
-      }
-
-
-        
+        blockAddrNow = (blockAddrNow + 1) % 5;
+        byte paraBlock[]    = {
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00
+        };
+        paraBlock[0] = blockAddrNow;
+        Authenticate(32);
+        status = (MFRC522::StatusCode) mfrc522.MIFARE_Write(32, paraBlock, 16);
+        if (status != MFRC522::STATUS_OK) {
+            Serial.print(F("MIFARE_Write() failed: "));
+            Serial.println(mfrc522.GetStatusCodeName(status));
+        }  
         Serial.println("\nInfo:\n");
         mfrc522.PICC_DumpToSerial(&(mfrc522.uid));
 
+        lastCommand = command;
+    }
+    else if(commandName.equals("CLEAR"))
+    {
+        digitalWrite(redLed,LOW);
+        digitalWrite(greenLed,HIGH);
+        delay(1000);
+        digitalWrite(greenLed,LOW);
+        delay(1000); 
+    }
+    else if(commandName.equals("SMALLMONEY"))
+    {
+        Authenticate(smallWalletAddr);
+        Serial.print(F("Writing data into small wallet block ")); 
+        Serial.print(smallWalletAddr);
+        Serial.println(F(" ..."));
+        Serial.println("smallBlock:");
+        dump_byte_array(smallBlock, 16); 
+        Serial.println();
+        status = (MFRC522::StatusCode) mfrc522.MIFARE_Write(smallWalletAddr, smallBlock, 16);
+        if (status != MFRC522::STATUS_OK) {
+            Serial.print(F("MIFARE_Write() failed: "));
+            Serial.println(mfrc522.GetStatusCodeName(status));
+        }
+        lastCommand = command;
+    }
+    else if(commandName.equals("SMALLQUERY"))
+    {
+        Serial.print(F("Reading data from small wallet block ")); 
+        Serial.print(smallWalletAddr);
+        Serial.println(F(" ..."));
+        AuthenticateA(smallWalletAddr);
+        status = (MFRC522::StatusCode) mfrc522.MIFARE_Read(smallWalletAddr, buffer, &size);
+        if (status != MFRC522::STATUS_OK) {
+            Serial.print(F("MIFARE_Read() failed: "));
+            Serial.println(mfrc522.GetStatusCodeName(status));
+        }
+        Serial.print(F("Data in small wallet block ")); 
+        Serial.print(smallWalletAddr); 
+        Serial.println(F(":"));
+        dump_byte_array(buffer, 16); 
+        Serial.println(bytes2Smallinfo(buffer, 16));
+        Serial.println();
+        Serial.println(); 
         lastCommand = command;
     }
     else if(commandName.equals("ACCESSACCEPTED"))
@@ -511,5 +565,25 @@ String bytes2Loginfo(byte* buffer, byte bufferSize)
     str += " ";
     
     return str;
+}
+
+String bytes2Smallinfo(byte* buffer, byte bufferSize)
+{
+    String str = "";
+    int albit = 0;
+    int alamount = 0;
+    for(int i=0;i<4;i++)
+    {
+        int value = buffer[i];
+        int c = value<<(8*i);
+        alamount += c;
+    }
+    albit = buffer[4];
+    str += (String)alamount;
+    str += " ";
+    str += (String)albit;
+    str += " ";
+   
+    return str; 
 }
 
