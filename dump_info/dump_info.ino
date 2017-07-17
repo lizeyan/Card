@@ -197,11 +197,7 @@ void loop() {
         0x00, 0x00, 0x00, 0x00,
         0x00, 0x00, 0x00, 0x00
     };
-    smallBlock[0] = (byte)(appendLogInt);
-    smallBlock[1] = (byte)(appendLogInt >> 8);
-    smallBlock[2] = (byte)(appendLogInt >> 16);
-    smallBlock[3] = (byte)(appendLogInt >> 24);
-    smallBlock[4] = (byte)(appendLogBit);
+
     
     
     byte blockAddrNow     = 0;
@@ -397,6 +393,30 @@ void loop() {
     }
     else if(commandName.equals("SMALLMONEY"))
     {
+        AuthenticateA(smallWalletAddr);
+        status = (MFRC522::StatusCode) mfrc522.MIFARE_Read(smallWalletAddr, buffer, &size);
+        if (status != MFRC522::STATUS_OK) {
+            Serial.print(F("MIFARE_Read() failed: "));
+            Serial.println(mfrc522.GetStatusCodeName(status));
+        }
+        int moneynow = bytes2Smallinfo(buffer, 16);
+        if(appendLogBit == 0)
+            moneynow += appendLogInt;
+        else
+            moneynow -= appendLogInt;
+        int bitnow = 0;
+        if(moneynow < 0)
+        {
+            moneynow = -moneynow;
+            bitnow = 1;
+        }
+            
+        smallBlock[0] = (byte)(moneynow);
+        smallBlock[1] = (byte)(moneynow >> 8);
+        smallBlock[2] = (byte)(moneynow >> 16);
+        smallBlock[3] = (byte)(moneynow >> 24);
+        smallBlock[4] = (byte)(bitnow);
+        
         Authenticate(smallWalletAddr);
         Serial.print(F("Writing data into small wallet block ")); 
         Serial.print(smallWalletAddr);
@@ -567,9 +587,8 @@ String bytes2Loginfo(byte* buffer, byte bufferSize)
     return str;
 }
 
-String bytes2Smallinfo(byte* buffer, byte bufferSize)
+int bytes2Smallinfo(byte* buffer, byte bufferSize)
 {
-    String str = "";
     int albit = 0;
     int alamount = 0;
     for(int i=0;i<4;i++)
@@ -579,11 +598,9 @@ String bytes2Smallinfo(byte* buffer, byte bufferSize)
         alamount += c;
     }
     albit = buffer[4];
-    str += (String)alamount;
-    str += " ";
-    str += (String)albit;
-    str += " ";
-   
-    return str; 
+    if(albit == 0)
+        return alamount;
+    else
+        return -alamount;
 }
 
