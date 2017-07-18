@@ -77,28 +77,27 @@ void loop() {
     mfrc522.PCD_Init(); // Init MFRC522 card
     if (!mfrc522.PICC_IsNewCardPresent())
     {
-      if(cardStatus == 1)
-      {
-        Serial.println("LEAVE");
-        cardStatus = 0;
-      }
-      return;
+        if(cardStatus == 1)
+        {
+            Serial.println("LEAVE");
+            cardStatus = 0;
+        }
+        return;
     }
     else
     {
-      if(cardStatus == 0)
-      {
-        if ( ! mfrc522.PICC_ReadCardSerial())
-          return;
-        Serial.print("ARRIVAL");
-        dump_byte_array(mfrc522.uid.uidByte, mfrc522.uid.size);
-        Serial.println();
-        cardStatus = 1;
-      }
+        if(cardStatus == 0)
+        {
+            if ( ! mfrc522.PICC_ReadCardSerial())
+              return;
+            Serial.print("ARRIVAL");
+            dump_byte_array(mfrc522.uid.uidByte, mfrc522.uid.size);
+            Serial.println();
+            cardStatus = 1;
+        }
     }
     if ( ! mfrc522.PICC_ReadCardSerial())
         return;
-//    dump_byte_array(mfrc522.uid.uidByte, mfrc522.uid.size);
     
     String commandName = "NULL";
     int appendLogInt = 0;
@@ -123,31 +122,25 @@ void loop() {
         commandName = command.substring(0, command.indexOf(' '));
         if(commandName.equals("APPENDLOG") || commandName.equals("SMALLMONEY"))
         {
-          String appendStr = command.substring(command.indexOf(' '));
-          appendStr.trim();
-          appendLogInt = appendStr.substring(0, appendStr.indexOf(' ')).toInt();
-          String appendStr2 = appendStr.substring(appendStr.indexOf(' '));
-          appendStr2.trim();
-          appendLogBit = appendStr2.substring(0, appendStr2.indexOf(' ')).toInt();
-          String appendStr3 = appendStr2.substring(appendStr2.indexOf(' '));
-          appendStr3.trim();
-          appendLogAmount = appendStr3.substring(0, appendStr3.indexOf(' ')).toInt();
-          String appendStr4 = appendStr3.substring(appendStr3.indexOf(' '));
-          appendStr4.trim();
-          appendLogLocation = appendStr4;          
-
-          Serial.print("command:");
-          Serial.println(command);
-          Serial.print("int:");
-          Serial.println(appendLogInt);
-          Serial.print("Bit:");
-          Serial.println(appendLogBit);
-//          Serial.print("Amount:");
-//          Serial.println(appendLogAmount);
-//          Serial.print("Location:");
-//          Serial.println(appendLogLocation);
-          
-          
+            String appendStr = command.substring(command.indexOf(' '));
+            appendStr.trim();
+            appendLogInt = appendStr.substring(0, appendStr.indexOf(' ')).toInt();
+            String appendStr2 = appendStr.substring(appendStr.indexOf(' '));
+            appendStr2.trim();
+            appendLogBit = appendStr2.substring(0, appendStr2.indexOf(' ')).toInt();
+            String appendStr3 = appendStr2.substring(appendStr2.indexOf(' '));
+            appendStr3.trim();
+            appendLogAmount = appendStr3.substring(0, appendStr3.indexOf(' ')).toInt();
+            String appendStr4 = appendStr3.substring(appendStr3.indexOf(' '));
+            appendStr4.trim();
+            appendLogLocation = appendStr4;          
+             
+//            Serial.print("command:");
+//            Serial.println(command);
+//            Serial.print("int:");
+//            Serial.println(appendLogInt);
+//            Serial.print("Bit:");
+//            Serial.println(appendLogBit);       
         }
     }
     else
@@ -158,7 +151,7 @@ void loop() {
     delay(100);
     if(lastCommand.equals(command))
     {
-      return;
+        return;
     }
 
 
@@ -179,13 +172,9 @@ void loop() {
         return;
     }
 
-    // In this sample we use the second sector,ei
-    // that is: sector #1, covering block #4 up to and including block #7
-
     byte buffer[18];
     byte size = sizeof(buffer);
     MFRC522::StatusCode status;
-    
     
     byte sector         = 1;
     byte blockAddr[]      = {4, 5, 6, 8, 9};
@@ -258,12 +247,12 @@ void loop() {
         subLoc2 = appendLogLocation.substring(32);
       }
     }
-    Serial.print("subLoc0:");
-    Serial.println(subLoc0);
-    Serial.print("subLoc1:");
-    Serial.println(subLoc1);
-    Serial.print("subLoc2:");
-    Serial.println(subLoc2);
+//    Serial.print("subLoc0:");
+//    Serial.println(subLoc0);
+//    Serial.print("subLoc1:");
+//    Serial.println(subLoc1);
+//    Serial.print("subLoc2:");
+//    Serial.println(subLoc2);
 
     
     byte locBlock0[]    = {
@@ -295,6 +284,7 @@ void loop() {
     {
         for(int i=0;i<5;i++)
         {   
+            String tmplog = "";
             Serial.print(F("Reading data from block ")); 
             Serial.print(blockAddr[(blockAddrNow+4-i)%5]);
             Serial.println(F(" ..."));
@@ -304,35 +294,28 @@ void loop() {
                 Serial.print(F("MIFARE_Read() failed: "));
                 Serial.println(mfrc522.GetStatusCodeName(status));
             }
-            Serial.print(F("Data in block ")); 
-            Serial.print(blockAddr[(blockAddrNow+4-i)%5]); 
-            Serial.println(F(":"));
-            dump_byte_array(buffer, 16); 
-            Serial.println(bytes2Loginfo(buffer, 16));
+            tmplog += bytes2Loginfo(buffer, 16);
+
+            AuthenticateA(locAddr[(blockAddrNow+4-i)%5]);
+            
+            status = (MFRC522::StatusCode) mfrc522.MIFARE_Read(locAddr[(blockAddrNow+4-i)%5], buffer, &size);
+            if (status != MFRC522::STATUS_OK) {
+                Serial.print(F("MIFARE_Read() failed: "));
+                Serial.println(mfrc522.GetStatusCodeName(status));
+            }
+            tmplog += bytes2Loc(buffer, 16);
+            status = (MFRC522::StatusCode) mfrc522.MIFARE_Read(locAddr[(blockAddrNow+4-i)%5] + 1, buffer, &size);
+            if (status != MFRC522::STATUS_OK) {
+                Serial.print(F("MIFARE_Read() failed: "));
+                Serial.println(mfrc522.GetStatusCodeName(status));
+            }
+            tmplog += bytes2Loc(buffer, 16);
+            Serial.println(tmplog);
             Serial.println();
-            Serial.println(); 
+            Serial.println();
+            
         }
-
-//          Serial.println(F("Authenticating using key A..."));
-//          status = (MFRC522::StatusCode) mfrc522.PCD_Authenticate(MFRC522::PICC_CMD_MF_AUTH_KEY_A, 4, &key, &(mfrc522.uid));
-//          if (status != MFRC522::STATUS_OK) {
-//              Serial.print(F("PCD_Authenticate() failed: "));
-//              Serial.println(mfrc522.GetStatusCodeName(status));
-//              return;
-//          }
-//          Serial.print(F("Reading data from block ")); Serial.print(4);
-//          Serial.println(F(" ..."));
-//          status = (MFRC522::StatusCode) mfrc522.MIFARE_Read(4, buffer, &size);
-//          if (status != MFRC522::STATUS_OK) {
-//              Serial.print(F("MIFARE_Read() failed: "));
-//              Serial.println(mfrc522.GetStatusCodeName(status));
-//          }
-//          Serial.print(F("Data in block ")); Serial.print(4); Serial.println(F(":"));
-//          dump_byte_array(buffer, 16); Serial.println();
-//          Serial.println();
-
-        lastCommand = command;
-        
+        lastCommand = command;  
     }
     else if(commandName.equals("APPENDLOG"))
     {
@@ -584,18 +567,6 @@ String bytes2String(byte* buffer, byte bufferSize)
 
 String bytes2Loginfo(byte* buffer, byte bufferSize)
 {
-//    dataBlock[0] = (byte)(appendLogInt);
-//    dataBlock[1] = (byte)(appendLogInt >> 8);
-//    dataBlock[2] = (byte)(appendLogInt >> 16);
-//    dataBlock[3] = (byte)(appendLogInt >> 24);
-//    dataBlock[4] = (byte)(appendLogBit);
-//    dataBlock[5] = 1; // 标记是否已有log
-//    dataBlock[8] = (byte)(appendLogAmount);
-//    dataBlock[9] = (byte)(appendLogAmount >> 8);
-//    dataBlock[10] = (byte)(appendLogAmount >> 16);
-//    dataBlock[11] = (byte)(appendLogAmount >> 24);
-
-  
     String str = "";
     String nostr = "No log";
     if(buffer[5] != 1)
@@ -623,6 +594,23 @@ String bytes2Loginfo(byte* buffer, byte bufferSize)
     str += (String)alamount;
     str += " ";
     
+    return str;
+}
+
+String bytes2Loc(byte* buffer, byte bufferSize)
+{
+    String str = "";
+    int alint = 0;
+    int albit = 0;
+    int alamount = 0;
+    for(int i=0;i<bufferSize;i++)
+    {
+        int value = buffer[i];
+        if(value == 0)
+            break;
+        char c = (char)(value);
+        str += c;
+    }
     return str;
 }
 
