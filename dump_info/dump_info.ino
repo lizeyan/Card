@@ -190,7 +190,7 @@ void loop() {
     byte sector         = 1;
     byte blockAddr[]      = {4, 5, 6, 8, 9};
     byte locAddr[]      = {12, 16, 20, 24, 28}; // 每个string放在单独的扇区中，分配2块，最多32字节，即32个字符
-    byte smallWalletAddr = 32;
+    byte smallWalletAddr = 36;
     byte smallBlock[]    = {
         0x00, 0x00, 0x00, 0x00, //  amount
         0x00, 0x00, 0x00, 0x00, //  +/-
@@ -200,7 +200,7 @@ void loop() {
 
     
     
-    byte blockAddrNow     = 0;
+    byte blockAddrNow = 0;
     Serial.println(F("Authenticating using key A..."));
     status = (MFRC522::StatusCode) mfrc522.PCD_Authenticate(MFRC522::PICC_CMD_MF_AUTH_KEY_A, 32, &key, &(mfrc522.uid));
     if (status != MFRC522::STATUS_OK) {
@@ -296,16 +296,16 @@ void loop() {
         for(int i=0;i<5;i++)
         {   
             Serial.print(F("Reading data from block ")); 
-            Serial.print(blockAddr[(blockAddrNow-i)%5]);
+            Serial.print(blockAddr[(blockAddrNow+4-i)%5]);
             Serial.println(F(" ..."));
-            AuthenticateA(blockAddr[(blockAddrNow-i)%5]);
-            status = (MFRC522::StatusCode) mfrc522.MIFARE_Read(blockAddr[(blockAddrNow-i)%5], buffer, &size);
+            AuthenticateA(blockAddr[(blockAddrNow+4-i)%5]);
+            status = (MFRC522::StatusCode) mfrc522.MIFARE_Read(blockAddr[(blockAddrNow+4-i)%5], buffer, &size);
             if (status != MFRC522::STATUS_OK) {
                 Serial.print(F("MIFARE_Read() failed: "));
                 Serial.println(mfrc522.GetStatusCodeName(status));
             }
             Serial.print(F("Data in block ")); 
-            Serial.print(blockAddr[(blockAddrNow-i)%5]); 
+            Serial.print(blockAddr[(blockAddrNow+4-i)%5]); 
             Serial.println(F(":"));
             dump_byte_array(buffer, 16); 
             Serial.println(bytes2Loginfo(buffer, 16));
@@ -385,11 +385,50 @@ void loop() {
     }
     else if(commandName.equals("CLEAR"))
     {
-        digitalWrite(redLed,LOW);
-        digitalWrite(greenLed,HIGH);
-        delay(1000);
-        digitalWrite(greenLed,LOW);
-        delay(1000); 
+        byte clearBlock[]    = {
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00
+        };
+        for(int i=0;i<5;i++)
+        {
+            Authenticate(blockAddr[i]);
+            status = (MFRC522::StatusCode) mfrc522.MIFARE_Write(blockAddr[i], clearBlock, 16);
+            if (status != MFRC522::STATUS_OK) {
+                Serial.print(F("MIFARE_Write() failed: "));
+                Serial.println(mfrc522.GetStatusCodeName(status));
+            }
+            Authenticate(locAddr[i]);
+            status = (MFRC522::StatusCode) mfrc522.MIFARE_Write(locAddr[i], clearBlock, 16);
+            if (status != MFRC522::STATUS_OK) {
+                Serial.print(F("MIFARE_Write() failed: "));
+                Serial.println(mfrc522.GetStatusCodeName(status));
+            }
+            status = (MFRC522::StatusCode) mfrc522.MIFARE_Write(locAddr[i]+1, clearBlock, 16);
+            if (status != MFRC522::STATUS_OK) {
+                Serial.print(F("MIFARE_Write() failed: "));
+                Serial.println(mfrc522.GetStatusCodeName(status));
+            }
+        }
+        Authenticate(32);
+        status = (MFRC522::StatusCode) mfrc522.MIFARE_Write(32, clearBlock, 16);
+        if (status != MFRC522::STATUS_OK) {
+            Serial.print(F("MIFARE_Write() failed: "));
+            Serial.println(mfrc522.GetStatusCodeName(status));
+        }
+        Authenticate(smallWalletAddr);
+        status = (MFRC522::StatusCode) mfrc522.MIFARE_Write(smallWalletAddr, clearBlock, 16);
+        if (status != MFRC522::STATUS_OK) {
+            Serial.print(F("MIFARE_Write() failed: "));
+            Serial.println(mfrc522.GetStatusCodeName(status));
+        }
+        lastCommand = command;
+    }
+    else if(commandName.equals("SHOW"))
+    {
+        mfrc522.PICC_DumpToSerial(&(mfrc522.uid));
+        lastCommand = command;
     }
     else if(commandName.equals("SMALLMONEY"))
     {
