@@ -33,20 +33,28 @@ class Terminal(object):
         Label(self.login_frame, text="password", font=self.custom_font).grid(row=1, column=0)
         self.terminal_password = StringVar()
         self.terminal_password.set("123xuyimiao")
-        self.terminal_password_edit = Entry(self.login_frame, show="*", text=self.terminal_password, font=self.custom_font)
+        self.terminal_password_edit = Entry(self.login_frame, show="*", text=self.terminal_password,
+                                            font=self.custom_font)
         self.terminal_password_edit.grid(row=1, column=1)
-        self.terminal_login_btn = Button(self.login_frame, text="Login", command=self.try_to_login, font=self.custom_font)
+        self.terminal_login_btn = Button(self.login_frame, text="Login", command=self.try_to_login,
+                                         font=self.custom_font)
         self.terminal_login_btn.grid(row=2, column=0, columnspan=2)
         self.login_frame.grid(row=0, column=0)
 
         # setup main frame
         self.main_frame = Frame(self.frame)
-        self.create_btn = Button(self.main_frame, text="Create", command=self.card_create, font=self.custom_font, width=15)
-        self.update_btn = Button(self.main_frame, text="Update", command=self.update_card, font=self.custom_font, width=15)
-        self.delete_btn = Button(self.main_frame, text="Delete", command=self.card_delete, font=self.custom_font, width=15)
-        self.consume_btn = Button(self.main_frame, text="Consume", command=self.card_consume, font=self.custom_font, width=15)
-        self.recharge_btn = Button(self.main_frame, text="Recharge", command=self.card_recharge, font=self.custom_font, width=15)
-        self.view_log_btn = Button(self.main_frame, text="View Log", command=self.card_log_show, font=self.custom_font, width=15)
+        self.create_btn = Button(self.main_frame, text="Create", command=self.card_create, font=self.custom_font,
+                                 width=15)
+        self.update_btn = Button(self.main_frame, text="Update", command=self.update_card, font=self.custom_font,
+                                 width=15)
+        self.delete_btn = Button(self.main_frame, text="Delete", command=self.card_delete, font=self.custom_font,
+                                 width=15)
+        self.consume_btn = Button(self.main_frame, text="Consume", command=self.card_consume, font=self.custom_font,
+                                  width=15)
+        self.recharge_btn = Button(self.main_frame, text="Recharge", command=self.card_recharge, font=self.custom_font,
+                                   width=15)
+        self.view_log_btn = Button(self.main_frame, text="View Log", command=self.card_log_show, font=self.custom_font,
+                                   width=15)
         self.delta_amount = DoubleVar()
         self.delta_amount_edit = Entry(self.main_frame, text=self.delta_amount, font=self.custom_font, width=15)
         self.student_name = StringVar()
@@ -68,11 +76,15 @@ class Terminal(object):
         self.view_log_btn.grid(row=6, column=0)
         Label(self.main_frame, textvariable=self.student_name, font=self.custom_font, width=20).grid(row=0, column=1)
         Entry(self.main_frame, textvariable=self.student_id, font=self.custom_font, width=20).grid(row=1, column=1)
-        Label(self.main_frame, textvariable=self.valid_duration_start, font=self.custom_font, width=20).grid(row=2, column=1)
-        Label(self.main_frame, textvariable=self.valid_duration_end, font=self.custom_font, width=20).grid(row=3, column=1)
+        Label(self.main_frame, textvariable=self.valid_duration_start, font=self.custom_font, width=20).grid(row=2,
+                                                                                                             column=1)
+        Label(self.main_frame, textvariable=self.valid_duration_end, font=self.custom_font, width=20).grid(row=3,
+                                                                                                           column=1)
         Label(self.main_frame, textvariable=self.balance, font=self.custom_font, width=20).grid(row=4, column=1)
 
-        Label(self.main_frame, textvariable=self.status_string, font=self.custom_font, width=20 + 15).grid(row=7, column=0, columnspan=2)
+        Label(self.main_frame, textvariable=self.status_string, font=self.custom_font, width=20 + 15).grid(row=7,
+                                                                                                           column=0,
+                                                                                                           columnspan=2)
 
         # card reader setting
         self.uid = ""
@@ -137,9 +149,11 @@ class Terminal(object):
             return
         time_point = datetime.strptime(self.student_info["end_time"], "%Y-%m-%dT%H:%M:%S")
         time_point += timedelta(weeks=18)
-        self.data_session.put_card(self.uid, self.student_info["url"], {"end_time": time_point.strftime("%Y-%m-%dT%H:%M:%S")})
+        self.data_session.put_card(self.uid, self.student_info["url"],
+                                   {"end_time": time_point.strftime("%Y-%m-%dT%H:%M:%S")})
         self.card_arrival_handler(self.uid)
-        self.status_string.set("Updated valid duration {begin}, {end}".format(begin=self.student_info["begin_time"], end=self.student_info["end_time"]))
+        self.status_string.set("Updated valid duration {begin}, {end}".format(begin=self.student_info["begin_time"],
+                                                                              end=self.student_info["end_time"]))
 
     def card_recharge(self):
         if self.uid == "":
@@ -218,7 +232,7 @@ class Terminal(object):
         for idx, log in enumerate(logs):
             Label(popup, text=log, font=self.custom_font).grid(row=idx, column=0)
 
+
 if __name__ == '__main__':
     logging.debug("Application start")
     terminal = Terminal()
-

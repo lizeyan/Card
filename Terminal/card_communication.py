@@ -1,5 +1,7 @@
 import re
 import threading
+import serial
+import serial.tools.list_ports
 import sys
 import logging
 
@@ -24,6 +26,11 @@ class CardCommunicator(threading.Thread):
     def __init__(self):
         self.handler_dict = {}
         self.input_line_parser = re.compile(r"(?P<command>[A-Z]+)\s+(?P<data>.*)\n?")
+        try:
+            self.serial = serial.Serial(serial.tools.list_ports.comports()[0])
+        except IndexError or FileNotFoundError:
+            raise RuntimeError("Unable to open the first Serial Port")
+        logging.debug("Open Serial {name}".format(name=self.serial.portStr))
         threading.Thread.__init__(self)
 
     def register(self, command: str, handler):
@@ -36,7 +43,8 @@ class CardCommunicator(threading.Thread):
         logging.debug("remove {command}".format(command=command))
 
     def run(self):
-        for line in sys.stdin:
+        while True:
+            line = self.serial.readline()
             match = self.input_line_parser.match(line)
             if not match:
                 continue
@@ -48,7 +56,7 @@ class CardCommunicator(threading.Thread):
                 else:
                     self.handler_dict[command]()
 
-    @staticmethod
-    def send(msg):
-        print("SEND:", msg)
+    def send(self, msg):
+        logging.debug("SEND:", msg)
+        self.serial.write(msg + "\n")
 
