@@ -90,7 +90,7 @@ void loop() {
         {
             if ( ! mfrc522.PICC_ReadCardSerial())
               return;
-            Serial.print("ARRIVAL");
+            Serial.print("ARRIVAL ");
             dump_byte_array(mfrc522.uid.uidByte, mfrc522.uid.size);
             Serial.println();
             cardStatus = 1;
@@ -290,7 +290,10 @@ void loop() {
                 Serial.println(mfrc522.GetStatusCodeName(status));
             }
             if(bytes2Loginfo(buffer, 16).equals("No log"))
+            {
+                Serial.println(tmplog); 
                 continue;
+            }
             tmplog += bytes2Loginfo(buffer, 16);
 
             AuthenticateA(locAddr[(blockAddrNow+4-i)%5]);
@@ -474,7 +477,9 @@ void loop() {
         digitalWrite(greenLed,HIGH);
         delay(1000);
         digitalWrite(greenLed,LOW);
-        delay(1000); 
+        lastCommand = command;
+
+//        delay(1000); 
     }
     else if(commandName.equals("ACCESSDENIED"))
     {
@@ -482,7 +487,14 @@ void loop() {
         digitalWrite(redLed,HIGH);
         delay(1000);
         digitalWrite(redLed,LOW);
-        delay(1000); 
+        lastCommand = command;
+
+//        delay(1000); 
+    }
+    else
+    {
+        Serial.println("ERROR COMMAND");
+        lastCommand = command;
     }
 
     
@@ -494,7 +506,7 @@ void loop() {
 
 void dump_byte_array(byte *buffer, byte bufferSize) {
     for (byte i = 0; i < bufferSize; i++) {
-        Serial.print(buffer[i] < 0x10 ? " 0" : " ");
+        Serial.print(buffer[i] < 0x10 ? "0" : "");
         Serial.print(buffer[i], HEX);
     }
     Serial.println();
