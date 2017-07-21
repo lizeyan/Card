@@ -5,6 +5,7 @@ from rest_framework.authentication import SessionAuthentication, BasicAuthentica
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework import permissions
 from rest_framework import viewsets
+from rest_framework.filters import DjangoFilterBackend
 from rest_framework.parsers import JSONParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_jwt.authentication import JSONWebTokenAuthentication
@@ -39,13 +40,9 @@ class CardViewSet(viewsets.ModelViewSet):
     """
     serializer_class = CardSerializer
     permission_classes = (permissions.IsAuthenticated, RegisterPermission)
-
-    def get_queryset(self):
-        card_id = self.request.GET.get('card_id')
-        if card_id is not None:
-            return Card.objects.filter(card_id=card_id)
-        else:
-            return Card.objects.all()
+    queryset = Card.objects.all()
+    filter_backends = (DjangoFilterBackend,)
+    filter_fields = ('card_id', 'student_id', )
 
 
 @csrf_exempt
