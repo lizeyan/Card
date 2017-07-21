@@ -27,7 +27,11 @@ class CardCommunicator(threading.Thread):
         self.handler_dict = {}
         self.input_line_parser = re.compile(r"(?P<command>[A-Z]+)\s+(?P<data>[^\n\r]*)\s*?")
         try:
-            self.serial = serial.Serial(serial.tools.list_ports.comports()[0].device)
+            serial_comports = serial.tools.list_ports.comports()
+            for comport in serial_comports:
+                if re.match("Arduino.*", comport.description):
+                    self.serial = serial.Serial(comport.device)
+                    break
         except IndexError or FileNotFoundError:
             raise RuntimeError("Unable to open the first Serial Port")
         logging.debug("Open Serial {name}".format(name=self.serial.port))
