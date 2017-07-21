@@ -112,7 +112,7 @@ class Terminal(object):
         self.main_frame.grid()
 
     def card_arrival_handler(self, uid):
-        logging.debug("Card {uid} arrived.".format(uid=uid))
+        logging.debug("Card +{uid}+ arrived.".format(uid=uid))
         self.student_info = self.data_session.query_card_by_uid(uid)
         self.uid = uid
         self.query_access()
@@ -122,6 +122,12 @@ class Terminal(object):
             self.valid_duration_start.set(self.student_info["begin_time"])
             self.valid_duration_end.set(self.student_info["end_time"])
             self.balance.set(self.student_info["card_money"])
+        else:
+            self.student_name.set("Name")
+            self.student_id.set("Id")
+            self.valid_duration_start.set("Valid Duration")
+            self.valid_duration_end.set("Valid Duration")
+            self.balance.set(0.0)
         self.status_string.set("Card {uid} arrived.".format(uid=uid))
 
     def query_access(self):
@@ -169,6 +175,7 @@ class Terminal(object):
             return
         self.data_session.decrease_money(self.uid, self.delta_amount.get())
         self.card_arrival_handler(self.uid)
+        self.card_communicator.send("APPENDLOG {timestamp} 0 {amount} {location}".format(timestamp=int(datetime.now().timestamp()), amount=int(self.delta_amount.get() * 100), location="TEST_LOCATION"))
         self.status_string.set(u"Consume ￥{amount}".format(amount=self.delta_amount.get()))
 
     def card_small_wallet_recharge(self):
@@ -211,6 +218,7 @@ class Terminal(object):
             messagebox.showerror("ERROR", "There is no card.")
             return
         self.data_session.delete_card(self.uid, self.student_info["url"])
+        self.card_arrival_handler(self.uid)
         self.status_string.set("Delete Card {uid}".format(uid=self.uid))
 
     def card_create(self):
@@ -223,7 +231,8 @@ class Terminal(object):
 
     def card_log_show(self):
         logs = []
-        self.card_communicator.register("LOG", lambda log: logs.append(log))
+        self.card_communicator.register("LOG", lambda x="": logs.append(x))
+        self.card_communicator.send("ASKFORLOG")
         while len(logs) < 5:
             time.sleep(0.1)
         self.card_communicator.remove("LOG")

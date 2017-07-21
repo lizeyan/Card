@@ -25,12 +25,14 @@ class CardCommunicator(threading.Thread):
     """
     def __init__(self):
         self.handler_dict = {}
-        self.input_line_parser = re.compile(r"(?P<command>[A-Z]+)\s+(?P<data>.*)\n?")
+        self.input_line_parser = re.compile(r"(?P<command>[A-Z]+)\s+(?P<data>[^\n\r]*)\s*?")
         try:
+
             self.serial = serial.Serial(list(serial.tools.list_ports.comports())[0])
+
         except IndexError or FileNotFoundError:
             raise RuntimeError("Unable to open the first Serial Port")
-        logging.debug("Open Serial {name}".format(name=self.serial.portStr))
+        logging.debug("Open Serial {name}".format(name=self.serial.port))
         threading.Thread.__init__(self)
 
     def register(self, command: str, handler):
@@ -45,11 +47,15 @@ class CardCommunicator(threading.Thread):
     def run(self):
         while True:
             line = self.serial.readline()
+            line = line.decode("utf-8").rstrip("\r\n")
+            logging.info("received:" + line)
             match = self.input_line_parser.match(line)
             if not match:
                 continue
             command = match.group("command")
             data = match.group("data")
+            logging.info("command:" + command)
+            logging.info("data:" + data)
             if command in self.handler_dict:
                 if data != "":
                     self.handler_dict[command](data)
@@ -57,6 +63,6 @@ class CardCommunicator(threading.Thread):
                     self.handler_dict[command]()
 
     def send(self, msg):
-        logging.debug("SEND:", msg)
-        self.serial.write(msg + "\n")
+        logging.info("send:" + msg)
+        self.serial.write((msg + "\n").encode("utf-8"))
 

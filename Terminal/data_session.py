@@ -75,7 +75,7 @@ class DataSession(object):
         """
         url = settings.HOST + "card/"
         rsp = requests.get(url, params={"student_id": student_id}, headers={"Authorization": "JWT " + self.token})
-        logging.debug("Response of {method} {url}: {rsp}".format(method="POST", url=url, rsp=rsp.text))
+        logging.debug("Response of {method} {url}: {rsp}".format(method="GET", url=url, rsp=rsp.text))
         return rsp.json()["results"][0]
 
     def increase_money(self, uid, money):
