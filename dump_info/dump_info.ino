@@ -100,21 +100,25 @@ void loop() {
         return;
     
     String commandName = "NULL";
-    int appendLogInt = 0;
+    unsigned long appendLogInt = 0;
     int appendLogBit = 0;
-    int appendLogAmount = 0;
+    unsigned long appendLogAmount = 0;
     String appendLogLocation = "";
     char tmpchar;
     if(Serial.available() > 0) // 串口有命令，准备接收
     {
         command = "";
-//        Serial.println("\nready to accept a command\n");
     }
 
     while(Serial.available() > 0){  
         tmpchar = Serial.read();//读串口第一个字节
+        delay(5);
         command += tmpchar;
     }  
+    if(lastCommand.equals(command))
+    {
+        return;
+    }
     delay(100); 
     if(command.length() > 0)
     {
@@ -124,23 +128,27 @@ void loop() {
         {
             String appendStr = command.substring(command.indexOf(' '));
             appendStr.trim();
-            appendLogInt = appendStr.substring(0, appendStr.indexOf(' ')).toInt();
+            appendLogInt = Str2uint(appendStr.substring(0, appendStr.indexOf(' ')));
             String appendStr2 = appendStr.substring(appendStr.indexOf(' '));
             appendStr2.trim();
             appendLogBit = appendStr2.substring(0, appendStr2.indexOf(' ')).toInt();
             String appendStr3 = appendStr2.substring(appendStr2.indexOf(' '));
             appendStr3.trim();
-            appendLogAmount = appendStr3.substring(0, appendStr3.indexOf(' ')).toInt();
+            appendLogAmount = Str2uint(appendStr3.substring(0, appendStr3.indexOf(' ')));
             String appendStr4 = appendStr3.substring(appendStr3.indexOf(' '));
             appendStr4.trim();
             appendLogLocation = appendStr4;          
              
 //            Serial.print("command:");
 //            Serial.println(command);
-//            Serial.print("int:");
+//            Serial.print("commandName:");
+//            Serial.println(commandName);
+//            Serial.print("Time:");
 //            Serial.println(appendLogInt);
 //            Serial.print("Bit:");
 //            Serial.println(appendLogBit);       
+//            Serial.print("Amount:");
+//            Serial.println(appendLogAmount); 
         }
     }
     else
@@ -149,10 +157,7 @@ void loop() {
         return ;
     }
     delay(100);
-    if(lastCommand.equals(command))
-    {
-        return;
-    }
+
 
 
     // Show some details of the PICC (that is: the tag/card)
@@ -493,7 +498,8 @@ void loop() {
     }
     else
     {
-        Serial.println("ERROR COMMAND");
+        Serial.print("ERROR COMMAND ");
+        Serial.println(command);
         lastCommand = command;
     }
 
@@ -578,20 +584,20 @@ String bytes2Loginfo(byte* buffer, byte bufferSize)
     String nostr = "No log";
     if(buffer[5] != 1)
         return nostr;
-    int alint = 0;
+    unsigned long alint = 0;
     int albit = 0;
-    int alamount = 0;
+    unsigned long alamount = 0;
     for(int i=0;i<4;i++)
     {
-        int value = buffer[i];
-        int c = value<<(8*i);
+        unsigned long value = buffer[i];
+        unsigned long c = value<<(8*i);
         alint += c;
     }
     albit = buffer[4];
     for(int i=0;i<4;i++)
     {
-        int value = buffer[8+i];
-        int c = value<<(8*i);
+        unsigned long value = buffer[8+i];
+        unsigned long c = value<<(8*i);
         alamount += c;
     }
     str += (String)alint;
@@ -607,9 +613,6 @@ String bytes2Loginfo(byte* buffer, byte bufferSize)
 String bytes2Loc(byte* buffer, byte bufferSize)
 {
     String str = "";
-    int alint = 0;
-    int albit = 0;
-    int alamount = 0;
     for(int i=0;i<bufferSize;i++)
     {
         int value = buffer[i];
@@ -636,5 +639,33 @@ int bytes2Smallinfo(byte* buffer, byte bufferSize)
         return alamount;
     else
         return -alamount;
+}
+
+unsigned long Str2uint(String str)
+{
+//    Serial.print("str is ");
+//    Serial.println(str);
+    unsigned long res = 0;
+    unsigned long rt = 1;
+//    Serial.print(sizeof(rt));
+    for(int i=0;i<str.length();i++)
+    {
+        char c = str.charAt(str.length()-i-1);
+//        Serial.print("c is ");
+//        Serial.print(c);
+        int ci = (int(c)-48);
+//        Serial.print("  ci is ");
+//        Serial.print(ci);
+//        Serial.print("  rt is ");
+//        Serial.print(rt);
+//        Serial.print("  ci*rt is ");
+//        Serial.print(ci * rt);
+        res += ci * rt;
+//        Serial.print("  res is ");
+//        Serial.println(res);
+        rt *= 10;
+    }
+    return res;
+    
 }
 
