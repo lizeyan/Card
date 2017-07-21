@@ -27,7 +27,7 @@ class CardCommunicator(threading.Thread):
         self.handler_dict = {}
         self.input_line_parser = re.compile(r"(?P<command>[A-Z]+)\s+(?P<data>.*)\n?")
         try:
-            self.serial = serial.Serial(serial.tools.list_ports.comports()[0])
+            self.serial = serial.Serial(list(serial.tools.list_ports.comports())[0])
         except IndexError or FileNotFoundError:
             raise RuntimeError("Unable to open the first Serial Port")
         logging.debug("Open Serial {name}".format(name=self.serial.portStr))

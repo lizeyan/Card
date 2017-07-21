@@ -498,8 +498,17 @@ void loop() {
     }
     else
     {
-        Serial.print("ERROR COMMAND ");
+        Serial.println("ERROR COMMAND ");
+        Serial.print("command:");
         Serial.println(command);
+        Serial.print("commandName:");
+        Serial.println(commandName);
+        Serial.print("Time:");
+        Serial.println(appendLogInt);
+        Serial.print("Bit:");
+        Serial.println(appendLogBit);       
+        Serial.print("Amount:");
+        Serial.println(appendLogAmount); 
         lastCommand = command;
     }
 
