@@ -112,16 +112,21 @@ void loop() {
 
     while(Serial.available() > 0){  
         tmpchar = Serial.read();//读串口第一个字节
-        delay(5);
+        delay(1);
+        if(tmpchar == '\r' || tmpchar == '\n')
+            break;
         command += tmpchar;
     }  
     if(lastCommand.equals(command))
     {
         return;
     }
+    
     delay(100); 
     if(command.length() > 0)
     {
+        Serial.print("receive the command -- ");
+        Serial.println(command);
         command.trim();
         commandName = command.substring(0, command.indexOf(' '));
         if(commandName.equals("APPENDLOG") || commandName.equals("SMALLMONEY"))
@@ -452,6 +457,8 @@ void loop() {
             Serial.print(F("MIFARE_Write() failed: "));
             Serial.println(mfrc522.GetStatusCodeName(status));
         }
+        Serial.print("small money now : ");
+        Serial.println(moneynow);
         lastCommand = command;
     }
     else if(commandName.equals("SMALLQUERY"))
