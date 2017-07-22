@@ -105,9 +105,16 @@ void loop() {
     unsigned long appendLogAmount = 0;
     String appendLogLocation = "";
     char tmpchar;
-    if(Serial.available() > 0) // 串口有命令，准备接收
+//    if(Serial.available() > 0) // 串口有命令，准备接收
+//    {
+//        command = "";
+//    }
+    command = "";
+
+    if(Serial.available() <= 0) // 串口无命令
     {
-        command = "";
+        delay(100);
+        return;
     }
 
     while(Serial.available() > 0){  
@@ -117,10 +124,10 @@ void loop() {
             break;
         command += tmpchar;
     }  
-    if(lastCommand.equals(command))
-    {
-        return;
-    }
+//    if(lastCommand.equals(command))
+//    {
+//        return;
+//    }
     
     delay(100); 
     if(command.length() > 0)
