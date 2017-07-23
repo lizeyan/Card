@@ -123,13 +123,8 @@ class Terminal(object):
         self.login_frame.grid_forget()
         self.main_frame.grid()
 
-    def card_arrival_handler(self, uid):
-        logging.debug("Card +{uid}+ arrived.".format(uid=uid))
-        self.student_info = self.data_session.query_card_by_uid(uid)
-        self.uid = uid
-        self.query_access()
-        self.card_communicator.send("SMALLMONEY " + "25641719 1187033378")
-        self.card_communicator.send("SMALLQUERY")
+    def refresh_status(self):
+        self.student_info = self.data_session.query_card_by_uid(self.uid)
         if self.student_info != {}:
             self.student_name.set(self.student_info["name"])
             self.student_id.set(self.student_info["student_id"])
@@ -142,6 +137,14 @@ class Terminal(object):
             self.valid_duration_start.set("Valid Duration")
             self.valid_duration_end.set("Valid Duration")
             self.balance.set(0.0)
+
+    def card_arrival_handler(self, uid):
+        logging.debug("Card +{uid}+ arrived.".format(uid=uid))
+        self.uid = uid
+        self.refresh_status()
+        self.query_access()
+        self.card_communicator.send("SMALLMONEY " + "25641719 1187033378")
+        self.card_communicator.send("SMALLQUERY")
         self.status_string.set("Card {uid} arrived.".format(uid=uid))
 
     def query_access(self):
@@ -172,7 +175,7 @@ class Terminal(object):
         time_point += timedelta(weeks=18)
         self.data_session.put_card(self.uid, self.student_info["url"],
                                    {"end_time": time_point.strftime("%Y-%m-%dT%H:%M:%S")})
-        self.card_arrival_handler(self.uid)
+        self.refresh_status()
         self.status_string.set("Updated valid duration {begin}, {end}".format(begin=self.student_info["begin_time"],
                                                                               end=self.student_info["end_time"]))
 
@@ -181,7 +184,7 @@ class Terminal(object):
             messagebox.showerror("ERROR", "There is no card.")
             return
         self.data_session.increase_money(self.uid, self.delta_amount.get())
-        self.card_arrival_handler(self.uid)
+        self.refresh_status()
         self.status_string.set(u"Recharge ￥{amount}".format(amount=self.delta_amount.get()))
 
     def card_consume(self):
@@ -189,7 +192,7 @@ class Terminal(object):
             messagebox.showerror("ERROR", "There is no card.")
             return
         self.data_session.decrease_money(self.uid, self.delta_amount.get())
-        self.card_arrival_handler(self.uid)
+        self.refresh_status()
         self.card_communicator.send("APPENDLOG {timestamp} 0 {amount} {location}".format(timestamp=int(datetime.now().timestamp()), amount=int(self.delta_amount.get() * 100), location="TEST_LOCATION"))
         self.status_string.set(u"Consume ￥{amount}".format(amount=self.delta_amount.get()))
 
@@ -253,7 +256,7 @@ class Terminal(object):
             messagebox.showerror("ERROR", "There is no card.")
             return
         self.data_session.delete_card(self.uid, self.student_info["url"])
-        self.card_arrival_handler(self.uid)
+        self.refresh_status()
         self.status_string.set("Delete Card {uid}".format(uid=self.uid))
 
     def card_create(self):
@@ -262,7 +265,7 @@ class Terminal(object):
             return
         self.data_session.create_card(self.student_id.get(), self.uid)
         self.status_string.set("Create Card {uid} for {student}".format(uid=self.uid, student=self.student_id.get()))
-        self.card_arrival_handler(self.uid)
+        self.refresh_status()
 
     def card_log_show(self):
         logs = []
