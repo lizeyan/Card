@@ -138,6 +138,7 @@ void loop() {
 
     while(Serial.available() > 0){  
         tmpchar = Serial.read();//读串口第一个字节
+        Serial.println(int(tmpchar));
         delay(1);
         if(tmpchar == '\r' || tmpchar == '\n')
             break;

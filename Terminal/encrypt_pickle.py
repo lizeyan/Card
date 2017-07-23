@@ -33,7 +33,36 @@ def load_decrypt(filename):
     data = decrypt(settings.KEY, encrypted)
     return pickle.loads(data)
 
+
+def money2int(money):
+    money_100 = int(money *100)
+    money_str = str(money_100)
+    money_str = '0' * (16 - len(money_str)) + money_str
+    eptd = encrypt(settings.KEY[:32], money_str.encode("utf-8"))
+    ans = [0, 0, 0, 0]
+    for i in range(4):
+        ans[i] = int(eptd[i * 4]) + 256 * int(eptd[i * 4 + 1]) + 256 * 256 * int(eptd[i * 4 + 2]) + \
+                 (256 ** 3) * int(eptd[i * 4 + 3])
+    return ans
+
+
+def int2money(money_int):
+    money_int = [int(x) for x in money_int]
+    money16 = []
+    for i in range(4):
+        for k in range(4):
+            money16.append(int(money_int[i]) % 256)
+            money_int[i] /= 256
+    money16 = [x.to_bytes(1, byteorder='big') for x in money16]
+    ans = money16[0]
+    for i in range(1, 16):
+        ans = ans + money16[i]
+    dptd = decrypt(settings.KEY[:32], ans)
+    ans = float(int(dptd.decode('utf-8'))) / 100
+    return ans
+
 if __name__ == '__main__':
-    eptd = encrypt(settings.KEY[:32], "00000".encode("utf-8"))
-    dptd = decrypt(settings.KEY[:32], eptd)
-    print(dptd)
+    ans = money2int(12312333)
+    print(ans)
+    money = int2money(ans)
+    print(money)

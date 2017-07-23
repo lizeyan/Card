@@ -8,6 +8,7 @@ import settings
 import requests
 from card_communication import CardCommunicator
 from data_session import *
+from encrypt_pickle import *
 
 
 class Terminal(object):
@@ -70,6 +71,8 @@ class Terminal(object):
         self.small_wallet_money = DoubleVar()
         self.small_wallet_decrease_money = None
         self.small_wallet_consume = False
+        self.small_wallet_increase_money = None
+        self.small_wallet_recharge = False
 
         self.create_btn.grid(row=0, column=0)
         self.delete_btn.grid(row=1, column=0)
@@ -125,6 +128,7 @@ class Terminal(object):
         self.student_info = self.data_session.query_card_by_uid(uid)
         self.uid = uid
         self.query_access()
+        self.card_communicator.send("SMALLMONEY " + "59130615 1170255905 311271691 495541946")
         self.card_communicator.send("SMALLQUERY")
         if self.student_info != {}:
             self.student_name.set(self.student_info["name"])
@@ -158,6 +162,7 @@ class Terminal(object):
         self.valid_duration_start.set("Valid Duration")
         self.valid_duration_end.set("Valid Duration")
         self.balance.set(0.0)
+        self.small_wallet_money.set(0.0)
 
     def update_card(self):
         if self.uid == "":
@@ -195,10 +200,9 @@ class Terminal(object):
         increase_money = self.delta_amount.get()
         response = self.data_session.decrease_money(self.uid, increase_money)
         if response['status'] == 'success':
-            self.card_communicator.send("SMALLMONEY " + str(int(increase_money * 100)) + " 0")
-            self.balance.set(self.balance.get() - increase_money)
-            self.small_wallet_money.set(self.small_wallet_money.get() + increase_money)
-            self.status_string.set(u"Recharge Small Wallet ￥{amount}".format(amount=increase_money))
+            self.small_wallet_increase_money = increase_money
+            self.small_wallet_recharge = True
+            self.card_communicator.send("SMALLQUERY")
         else:
             messagebox.showerror("ERROR", "There is not enough money.")
 
@@ -211,23 +215,38 @@ class Terminal(object):
         self.card_communicator.send("SMALLQUERY")
 
     def card_small_wallet_handler(self, data):
-        print(data)
         sp = data.strip().split()
-        now_money = float(sp[0]) / 100
+        sp = [int(x) for x in sp]
+        print(sp)
+        now_money = int2money(sp)
         if self.uid == "":
             messagebox.showerror("ERROR", "There is no card.")
             return
         self.small_wallet_money.set(now_money)
         if self.small_wallet_consume and self.small_wallet_decrease_money is not None:
             if self.small_wallet_decrease_money <= now_money:
-                self.card_communicator.send("SMALLMONEY " + str(int(self.small_wallet_decrease_money * 100)) + " 1")
-                small_wallet_money_tmp = self.small_wallet_money.get() - self.small_wallet_decrease_money
-                self.small_wallet_money.set(small_wallet_money_tmp)
+                now_money = now_money - self.small_wallet_decrease_money
+                answer = money2int(now_money)
+                answer = [str(x) for x in answer]
+                answer = ' '.join(answer)
+                self.card_communicator.send("SMALLMONEY " + answer)
+                self.small_wallet_money.set(now_money)
                 self.status_string.set(u"Consume Small Wallet ￥{amount}".format(amount=self.small_wallet_decrease_money))
             else:
                 messagebox.showerror("ERROR", "There is no enough money in small wallet.")
             self.small_wallet_consume = False
             self.small_wallet_decrease_money = None
+        elif self.small_wallet_recharge and self.small_wallet_increase_money is not None:
+            now_money = now_money + self.small_wallet_increase_money
+            answer = money2int(now_money)
+            answer = [str(x) for x in answer]
+            answer = ' '.join(answer)
+            self.card_communicator.send("SMALLMONEY " + answer)
+            self.balance.set(self.balance.get() - self.small_wallet_increase_money)
+            self.status_string.set(u"Recharge Small Wallet ￥{amount}".format(amount=self.small_wallet_increase_money))
+            self.small_wallet_money.set(now_money)
+            self.small_wallet_recharge = False
+            self.small_wallet_increase_money = None
 
     def card_delete(self):
         if self.uid == "":
