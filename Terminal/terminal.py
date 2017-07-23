@@ -128,7 +128,7 @@ class Terminal(object):
         self.student_info = self.data_session.query_card_by_uid(uid)
         self.uid = uid
         self.query_access()
-        self.card_communicator.send("SMALLMONEY " + "59130615 1170255905 311271691 495541946")
+        self.card_communicator.send("SMALLMONEY " + "25641719 1187033378")
         self.card_communicator.send("SMALLQUERY")
         if self.student_info != {}:
             self.student_name.set(self.student_info["name"])

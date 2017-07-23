@@ -189,13 +189,7 @@ void loop() {
             smallMoneyInt1 = Str2uint(appendStr.substring(0, appendStr.indexOf(' ')));
             String appendStr2 = appendStr.substring(appendStr.indexOf(' '));
             appendStr2.trim();
-            smallMoneyInt2 = appendStr2.substring(0, appendStr2.indexOf(' ')).toInt();
-            String appendStr3 = appendStr2.substring(appendStr2.indexOf(' '));
-            appendStr3.trim();
-            smallMoneyInt3 = Str2uint(appendStr3.substring(0, appendStr3.indexOf(' ')));
-            String appendStr4 = appendStr3.substring(appendStr3.indexOf(' '));
-            appendStr4.trim();
-            smallMoneyInt4 = Str2uint(appendStr4.substring(0, appendStr4.indexOf(' ')));
+            smallMoneyInt2 = Str2uint(appendStr2.substring(0, appendStr2.indexOf(' ')));
         }
     }
     else
@@ -479,14 +473,6 @@ void loop() {
         smallBlock[5] = (byte)(smallMoneyInt2 >> 8);
         smallBlock[6] = (byte)(smallMoneyInt2 >> 16);
         smallBlock[7] = (byte)(smallMoneyInt2 >> 24);
-        smallBlock[8] = (byte)(smallMoneyInt3);
-        smallBlock[9] = (byte)(smallMoneyInt3 >> 8);
-        smallBlock[10] = (byte)(smallMoneyInt3 >> 16);
-        smallBlock[11] = (byte)(smallMoneyInt3 >> 24);
-        smallBlock[12] = (byte)(smallMoneyInt4);
-        smallBlock[13] = (byte)(smallMoneyInt4 >> 8);
-        smallBlock[14] = (byte)(smallMoneyInt4 >> 16);
-        smallBlock[15] = (byte)(smallMoneyInt4 >> 24);
         
         Authenticate(smallWalletAddr);
 //        Serial.print(F("Writing data into small wallet block ")); 
@@ -690,7 +676,7 @@ String bytes2Loc(byte* buffer, byte bufferSize)
 String bytes2Smallinfo(byte* buffer, byte bufferSize)
 {
     String res = "";
-    for(int i=0;i<4;i++)
+    for(int i=0;i<2;i++)
     {
         unsigned long alamount = 0;
         for(int j=0;j<4;j++)
