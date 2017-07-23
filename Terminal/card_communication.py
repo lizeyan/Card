@@ -16,7 +16,7 @@ class CardCommunicator(threading.Thread):
         ASKFORLOG  # when this message is received, the card reader should read and send the logs
         APPENDLOG {timestamp: uint32} {+/-: bit} {amount: uint32(real amount * 100)} {location: 32bytes}  # write a log
         LOG {timestamp: uint32} {+/-: bit(0/1)} {amount: uint32(real amount * 100)} {location: 32bytes string}  # send a log to terminal
-        SMALLMONEY {amount: uint32(real amount * 100)} {+/-: bit(0/1)}
+        SMALLMONEY {amount: bytes(128bit)}
         SMALLQUERY # get now money in small wallet
         CLEAR # clean all log
         ACCESSACCEPTED
