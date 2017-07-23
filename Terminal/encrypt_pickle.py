@@ -58,8 +58,12 @@ def int2money(money_int):
     for i in range(1, 8):
         ans = ans + money8[i]
     dptd = decrypt(settings.KEY[:32], ans)
-    ans = float(int(dptd.decode('utf-8'))) / 100
-    return ans
+    try:
+        ans = float(int(dptd.decode('utf-8'))) / 100
+        return ans
+    except:
+        print('int2money error.')
+        return 0
 
 if __name__ == '__main__':
     ans = money2int(1231.12)

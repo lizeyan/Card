@@ -138,8 +138,7 @@ void loop() {
 
     while(Serial.available() > 0){  
         tmpchar = Serial.read();//读串口第一个字节
-        Serial.print(int(tmpchar));
-        Serial.print(' ');
+        Serial.println(int(tmpchar));
         delay(1);
         if(tmpchar == '\r' || tmpchar == '\n')
             break;
@@ -514,11 +513,9 @@ void loop() {
     }
     else if(commandName.equals("ACCESSACCEPTED"))
     {
-        Serial.println("green light on");
         digitalWrite(redLed,LOW);
         digitalWrite(greenLed,HIGH);
-        delay(1000);
-        Serial.println("green light off");
+        delay(100);
         digitalWrite(greenLed,LOW);
         lastCommand = command;
 

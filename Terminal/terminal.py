@@ -143,7 +143,7 @@ class Terminal(object):
         self.uid = uid
         self.refresh_status()
         self.query_access()
-        self.card_communicator.send("SMALLMONEY " + "25641719 1187033378")
+        # self.card_communicator.send("SMALLMONEY " + "25641719 1187033378")
         self.card_communicator.send("SMALLQUERY")
         self.status_string.set("Card {uid} arrived.".format(uid=uid))
 
@@ -203,6 +203,9 @@ class Terminal(object):
         increase_money = self.delta_amount.get()
         response = self.data_session.decrease_money(self.uid, increase_money)
         if response['status'] == 'success':
+            self.small_wallet_recharge_btn.config(state='disable')
+            self.small_wallet_consume_btn.config(state='disable')
+            self.status_string.set("Writing card, please wait...")
             self.small_wallet_increase_money = increase_money
             self.small_wallet_recharge = True
             self.card_communicator.send("SMALLQUERY")
@@ -213,6 +216,9 @@ class Terminal(object):
         if self.uid == "":
             messagebox.showerror("ERROR", "There is no card.")
             return
+        self.small_wallet_recharge_btn.config(state='disable')
+        self.small_wallet_consume_btn.config(state='disable')
+        self.status_string.set("Writing card, please wait...")
         self.small_wallet_decrease_money = self.delta_amount.get()
         self.small_wallet_consume = True
         self.card_communicator.send("SMALLQUERY")
@@ -239,6 +245,8 @@ class Terminal(object):
                 messagebox.showerror("ERROR", "There is no enough money in small wallet.")
             self.small_wallet_consume = False
             self.small_wallet_decrease_money = None
+            self.small_wallet_recharge_btn.config(state='normal')
+            self.small_wallet_consume_btn.config(state='normal')
         elif self.small_wallet_recharge and self.small_wallet_increase_money is not None:
             now_money = now_money + self.small_wallet_increase_money
             answer = money2int(now_money)
@@ -250,6 +258,8 @@ class Terminal(object):
             self.small_wallet_money.set(now_money)
             self.small_wallet_recharge = False
             self.small_wallet_increase_money = None
+            self.small_wallet_recharge_btn.config(state='normal')
+            self.small_wallet_consume_btn.config(state='normal')
 
     def card_delete(self):
         if self.uid == "":

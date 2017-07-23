@@ -5,6 +5,7 @@ import atexit
 import os
 from datetime import datetime
 from encrypt_pickle import *
+import json
 
 
 class DataSession(object):
@@ -61,7 +62,7 @@ class DataSession(object):
         """
         url = settings.HOST + "card/"
         rsp = requests.get(url, params={"card_id": uid}, headers={"Authorization": "JWT " + self.token})
-        logging.debug("Response of {method} {url}: {rsp}".format(method="POST", url=url, rsp=rsp.text))
+        logging.debug("Response of {method} {url}: {rsp}".format(method="GET", url=url, rsp=rsp.text))
         results = rsp.json()["results"]
         if len(results) > 0:
             return rsp.json()["results"][0]
@@ -100,7 +101,9 @@ class DataSession(object):
     def delete_card(self, uid: str, url: str = ""):
         if url == "":
             url = self.query_card_by_uid(uid)["url"]
-        rsp = requests.put(url, data={"card_id": ""}, headers={"Authorization": "JWT " + self.token})
+        payload = {"card_id": None}
+        rsp = requests.put(url, data=json.dumps(payload), headers={"Authorization": "JWT " + self.token,
+                                                                   'content-type': 'application/json'})
         logging.debug("Response of {method} {url} : {rsp}".format(method="PUT", url=url, rsp=rsp.text))
         return rsp.json()
 
