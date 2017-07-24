@@ -57,9 +57,24 @@ void setup() {
 
     // Prepare the key (used both as key A and as key B)
     // using FFFFFFFFFFFFh which is the default at chip delivery from the factory
-    for (byte i = 0; i < 6; i++) {
-        key.keyByte[i] = 0xFF;
-    }
+
+//    for (byte i = 0; i < 6; i++) {
+//        key.keyByte[i] = 0xFF;
+//    }
+      key.keyByte[0] = 0x4E; // 0x4E, 0x55, 0x87, 0xB8, 0x13, 0xDF
+      key.keyByte[1] = 0x55;
+      key.keyByte[2] = 0x87;
+      key.keyByte[3] = 0xB8;
+      key.keyByte[4] = 0x13;
+      key.keyByte[5] = 0xDF;
+
+//      key.keyByte[0] = 0x00; // 0x4E, 0x55, 0x87, 0xB8, 0x13, 0xDF
+//      key.keyByte[1] = 0x00;
+//      key.keyByte[2] = 0x00;
+//      key.keyByte[3] = 0x00;
+//      key.keyByte[4] = 0x00;
+//      key.keyByte[5] = 0x00;
+      
 
     Serial.println(F("Scan a MIFARE Classic PICC to demonstrate read and write."));
     Serial.print(F("Using key (for A and B):"));
@@ -104,27 +119,44 @@ void loop() {
     int appendLogBit = 0;
     unsigned long appendLogAmount = 0;
     String appendLogLocation = "";
+    unsigned long smallMoneyInt1 = 0;
+    unsigned long smallMoneyInt2 = 0;
+    unsigned long smallMoneyInt3 = 0;
+    unsigned long smallMoneyInt4 = 0;
     char tmpchar;
-    if(Serial.available() > 0) // 串口有命令，准备接收
+//    if(Serial.available() > 0) // 串口有命令，准备接收
+//    {
+//        command = "";
+//    }
+    command = "";
+
+    if(Serial.available() <= 0) // 串口无命令
     {
-        command = "";
+        delay(100);
+        return;
     }
 
     while(Serial.available() > 0){  
         tmpchar = Serial.read();//读串口第一个字节
-        delay(5);
+        Serial.println(int(tmpchar));
+        delay(1);
+        if(tmpchar == '\r' || tmpchar == '\n')
+            break;
         command += tmpchar;
     }  
-    if(lastCommand.equals(command))
-    {
-        return;
-    }
+//    if(lastCommand.equals(command))
+//    {
+//        return;
+//    }
+    
     delay(100); 
     if(command.length() > 0)
     {
+        Serial.print("receive the command -- ");
+        Serial.println(command);
         command.trim();
         commandName = command.substring(0, command.indexOf(' '));
-        if(commandName.equals("APPENDLOG") || commandName.equals("SMALLMONEY"))
+        if(commandName.equals("APPENDLOG"))
         {
             String appendStr = command.substring(command.indexOf(' '));
             appendStr.trim();
@@ -149,6 +181,21 @@ void loop() {
 //            Serial.println(appendLogBit);       
 //            Serial.print("Amount:");
 //            Serial.println(appendLogAmount); 
+        }
+        else if(commandName.equals("SMALLMONEY"))
+        {
+            String appendStr = command.substring(command.indexOf(' '));
+            appendStr.trim();
+            smallMoneyInt1 = Str2uint(appendStr.substring(0, appendStr.indexOf(' ')));
+            String appendStr2 = appendStr.substring(appendStr.indexOf(' '));
+            appendStr2.trim();
+            smallMoneyInt2 = appendStr2.substring(0, appendStr2.indexOf(' ')).toInt();
+            String appendStr3 = appendStr2.substring(appendStr2.indexOf(' '));
+            appendStr3.trim();
+            smallMoneyInt3 = Str2uint(appendStr3.substring(0, appendStr3.indexOf(' ')));
+            String appendStr4 = appendStr3.substring(appendStr3.indexOf(' '));
+            appendStr4.trim();
+            smallMoneyInt4 = Str2uint(appendStr4.substring(0, appendStr4.indexOf(' ')));
         }
     }
     else
@@ -422,23 +469,24 @@ void loop() {
             Serial.print(F("MIFARE_Read() failed: "));
             Serial.println(mfrc522.GetStatusCodeName(status));
         }
-        int moneynow = bytes2Smallinfo(buffer, 16);
-        if(appendLogBit == 0)
-            moneynow += appendLogInt;
-        else
-            moneynow -= appendLogInt;
-        int bitnow = 0;
-        if(moneynow < 0)
-        {
-            moneynow = -moneynow;
-            bitnow = 1;
-        }
+
             
-        smallBlock[0] = (byte)(moneynow);
-        smallBlock[1] = (byte)(moneynow >> 8);
-        smallBlock[2] = (byte)(moneynow >> 16);
-        smallBlock[3] = (byte)(moneynow >> 24);
-        smallBlock[4] = (byte)(bitnow);
+        smallBlock[0] = (byte)(smallMoneyInt1);
+        smallBlock[1] = (byte)(smallMoneyInt1 >> 8);
+        smallBlock[2] = (byte)(smallMoneyInt1 >> 16);
+        smallBlock[3] = (byte)(smallMoneyInt1 >> 24);
+        smallBlock[4] = (byte)(smallMoneyInt2);
+        smallBlock[5] = (byte)(smallMoneyInt2 >> 8);
+        smallBlock[6] = (byte)(smallMoneyInt2 >> 16);
+        smallBlock[7] = (byte)(smallMoneyInt2 >> 24);
+        smallBlock[8] = (byte)(smallMoneyInt3);
+        smallBlock[9] = (byte)(smallMoneyInt3 >> 8);
+        smallBlock[10] = (byte)(smallMoneyInt3 >> 16);
+        smallBlock[11] = (byte)(smallMoneyInt3 >> 24);
+        smallBlock[12] = (byte)(smallMoneyInt4);
+        smallBlock[13] = (byte)(smallMoneyInt4 >> 8);
+        smallBlock[14] = (byte)(smallMoneyInt4 >> 16);
+        smallBlock[15] = (byte)(smallMoneyInt4 >> 24);
         
         Authenticate(smallWalletAddr);
 //        Serial.print(F("Writing data into small wallet block ")); 
@@ -452,6 +500,7 @@ void loop() {
             Serial.print(F("MIFARE_Write() failed: "));
             Serial.println(mfrc522.GetStatusCodeName(status));
         }
+
         lastCommand = command;
     }
     else if(commandName.equals("SMALLQUERY"))
@@ -484,7 +533,6 @@ void loop() {
         digitalWrite(greenLed,LOW);
         lastCommand = command;
 
-//        delay(1000); 
     }
     else if(commandName.equals("ACCESSDENIED"))
     {
@@ -493,8 +541,14 @@ void loop() {
         delay(1000);
         digitalWrite(redLed,LOW);
         lastCommand = command;
-
-//        delay(1000); 
+    }
+    else if(commandName.equals("SETKEY"))
+    {
+        resetKey();
+    }
+    else if(commandName.equals("NEWKEY"))
+    {
+        showNewKey();
     }
     else
     {
@@ -633,21 +687,23 @@ String bytes2Loc(byte* buffer, byte bufferSize)
     return str;
 }
 
-int bytes2Smallinfo(byte* buffer, byte bufferSize)
+String bytes2Smallinfo(byte* buffer, byte bufferSize)
 {
-    int albit = 0;
-    int alamount = 0;
+    String res = "";
     for(int i=0;i<4;i++)
     {
-        int value = buffer[i];
-        int c = value<<(8*i);
-        alamount += c;
+        unsigned long alamount = 0;
+        for(int j=0;j<4;j++)
+        {
+            unsigned long value = buffer[i * 4 + j];
+            unsigned long c = value<<(8*j);
+            alamount += c;
+        }
+        res += (String)alamount;
+        res += " ";
     }
-    albit = buffer[4];
-    if(albit == 0)
-        return alamount;
-    else
-        return -alamount;
+    
+    return res;
 }
 
 unsigned long Str2uint(String str)
@@ -676,5 +732,112 @@ unsigned long Str2uint(String str)
     }
     return res;
     
+}
+
+void resetKey()
+{
+    MFRC522::StatusCode status;
+    byte newKeyBlock[]    = {
+        0x4E, 0x55, 0x87, 0xB8, 
+        0x13, 0xDF, 0xFF, 0x07,
+        0x80, 0x69, 0x4E, 0x55,
+        0x87, 0xB8, 0x13, 0xDF
+    };
+    for(int i=7;i<=43;i+=4)
+    {
+        Authenticate(i);
+        status = (MFRC522::StatusCode) mfrc522.MIFARE_Write(i, newKeyBlock, 16);
+            if (status != MFRC522::STATUS_OK) {
+                Serial.print(F("Change key MIFARE_Write() failed: "));
+                Serial.println(mfrc522.GetStatusCodeName(status));
+            }
+    }   
+    return;
+}
+
+void showNewKey()
+{
+    byte buffer[18];
+    byte size = sizeof(buffer);
+    MFRC522::MIFARE_Key keyA;
+    MFRC522::MIFARE_Key keyB;
+    for (byte i = 0; i < 6; i++) {
+        keyA.keyByte[i] = 0x00;
+    }
+    keyB.keyByte[0] = 0x4E; // 0x4E, 0x55, 0x87, 0xB8, 0x13, 0xDF
+    keyB.keyByte[1] = 0x55;
+    keyB.keyByte[2] = 0x87;
+    keyB.keyByte[3] = 0xB8;
+    keyB.keyByte[4] = 0x13;
+    keyB.keyByte[5] = 0xDF;
+    MFRC522::StatusCode status;
+    status = (MFRC522::StatusCode) mfrc522.PCD_Authenticate(MFRC522::PICC_CMD_MF_AUTH_KEY_A, 43, &keyA, &(mfrc522.uid));
+    if (status != MFRC522::STATUS_OK) 
+    {
+        Serial.print(F("show new key A PCD_Authenticate() failed: "));
+        Serial.println(mfrc522.GetStatusCodeName(status));
+        return;
+    }  
+    status = (MFRC522::StatusCode) mfrc522.PCD_Authenticate(MFRC522::PICC_CMD_MF_AUTH_KEY_B, 43, &keyB, &(mfrc522.uid));
+    if (status != MFRC522::STATUS_OK) 
+    {
+        Serial.print(F("show new key B PCD_Authenticate() failed: "));
+        Serial.println(mfrc522.GetStatusCodeName(status));
+        return;
+    }
+    status = (MFRC522::StatusCode) mfrc522.MIFARE_Read(43, buffer, &size);
+    if (status != MFRC522::STATUS_OK) {
+        Serial.print(F("show new key MIFARE_Read() failed: "));
+        Serial.println(mfrc522.GetStatusCodeName(status));
+    }  
+
+    dump_byte_array(buffer, size);
+
+//    byte newKeyBlock[]    = {
+//            0x4E, 0x55, 0x87, 0xB8, 
+//            0x13, 0xDF, 0xFF, 0x07,
+//            0x80, 0x69, 0x4E, 0x55,
+//            0x87, 0xB8, 0x13, 0xDF
+//        };
+
+            byte newKeyBlock[]    = {
+            0xFF, 0xFF, 0xFF, 0xFF,
+            0xFF, 0xFF, 0xFF, 0x07,
+            0x80, 0x69, 0xFF, 0xFF,
+            0xFF, 0xFF, 0xFF, 0xFF
+        };
+           status = (MFRC522::StatusCode) mfrc522.MIFARE_Write(43, newKeyBlock, 16);
+    if (status != MFRC522::STATUS_OK) {
+        Serial.print(F("show new key MIFARE_Write() failed: "));
+        Serial.println(mfrc522.GetStatusCodeName(status));
+    }
+//
+//    status = (MFRC522::StatusCode) mfrc522.MIFARE_Read(40, buffer, &size);
+//    if (status != MFRC522::STATUS_OK) {
+//        Serial.print(F("show new key MIFARE_Read() failed: "));
+//        Serial.println(mfrc522.GetStatusCodeName(status));
+//    }  
+//
+//    dump_byte_array(buffer, size);
+    
+    return;
+}
+
+void resetUID()
+{
+    MFRC522::StatusCode status;
+    Authenticate(40);
+    byte newKeyBlock[]    = { // 12 0D 78 0D  6A 08 04 00  62 63 64 65  66 67 68 69
+            0x12, 0x0D, 0x78, 0x0D,
+            0x6A, 0x08, 0x04, 0x00,
+            0x62, 0x63, 0x64, 0x65,
+            0x66, 0x67, 0x68, 0x69
+        };
+    status = (MFRC522::StatusCode) mfrc522.MIFARE_Write(40, newKeyBlock, 16);
+            if (status != MFRC522::STATUS_OK) {
+                Serial.print(F("Change uid MIFARE_Write() failed: "));
+                Serial.println(mfrc522.GetStatusCodeName(status));
+            }
+    return;
 }
 
