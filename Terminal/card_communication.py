@@ -29,8 +29,7 @@ class CardCommunicator(threading.Thread):
         try:
             serial_comports = serial.tools.list_ports.comports()
             for comport in serial_comports:
-                print(comport.description)
-                if re.match("USB*", comport.description):
+                if re.match("Arduino*", comport.description) or re.match("USB*", comport.description):
                     self.serial = serial.Serial(comport.device)
                     break
         except IndexError or FileNotFoundError:
