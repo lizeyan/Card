@@ -6,7 +6,7 @@ import datetime
 # Create your models here.
 
 class Card(models.Model):
-    card_id = models.CharField(max_length=100, blank=True, default='', unique=True)
+    card_id = models.CharField(max_length=100, blank=True, default='', unique=True, null=True)
     name = models.CharField(max_length=50, blank=True, default='')
     student_id = models.CharField(max_length=20, blank=True, default='', unique=True)
     begin_time = models.DateTimeField(blank=True, default=datetime.datetime.now)
