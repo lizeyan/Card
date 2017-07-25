@@ -43,8 +43,10 @@ String lastCommand;
 int cardStatus = 0;
 int redLed = 4;
 int greenLed = 2;
+int ledStatus = 0; // 0 -- no led  1 -- red  2 -- green
+int ledTime = 0;
 
-/**
+ /**
  * Initialize.
  */
 void setup() {
@@ -89,6 +91,14 @@ void setup() {
  * Main loop.
  */
 void loop() {
+
+    if(ledTime > 999)
+    {
+        digitalWrite(greenLed,LOW);
+        digitalWrite(redLed,LOW);
+    }
+
+  
     mfrc522.PCD_Init(); // Init MFRC522 card
     if (!mfrc522.PICC_IsNewCardPresent())
     {
@@ -133,13 +143,14 @@ void loop() {
     if(Serial.available() <= 0) // 串口无命令
     {
         delay(100);
+        ledTime += 100;
         return;
     }
 
     while(Serial.available() > 0){  
         tmpchar = Serial.read();//读串口第一个字节
-        Serial.println(int(tmpchar));
         delay(1);
+        ledTime += 1;
         if(tmpchar == '\r' || tmpchar == '\n')
             break;
         command += tmpchar;
@@ -149,7 +160,8 @@ void loop() {
 //        return;
 //    }
     
-    delay(100); 
+    delay(50);
+    ledTime += 50; 
     if(command.length() > 0)
     {
         Serial.print("receive the command -- ");
@@ -197,7 +209,7 @@ void loop() {
         commandName = "NULL";
         return ;
     }
-    delay(100);
+
 
 
 
@@ -515,8 +527,8 @@ void loop() {
     {
         digitalWrite(redLed,LOW);
         digitalWrite(greenLed,HIGH);
-        delay(100);
-        digitalWrite(greenLed,LOW);
+        ledStatus = 2;
+        ledTime = 0;
         lastCommand = command;
 
     }
@@ -524,8 +536,8 @@ void loop() {
     {
         digitalWrite(greenLed,LOW);
         digitalWrite(redLed,HIGH);
-        delay(1000);
-        digitalWrite(redLed,LOW);
+        ledStatus = 1;
+        ledTime = 0;
         lastCommand = command;
     }
     else if(commandName.equals("SETKEY"))
