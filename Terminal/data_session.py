@@ -14,7 +14,7 @@ class DataSession(object):
 
     def __init__(self):
         self.token = ""
-        self.access_log = None  #load_decrypt(self.RECENT_ACCESS_LOG_CACHE_PATH)
+        self.access_log = load_decrypt(self.RECENT_ACCESS_LOG_CACHE_PATH)
         if self.access_log is None:
             self.access_log = {}  # key: uid, value: access_time(datetime))
         atexit.register(self.exit)
@@ -44,9 +44,14 @@ class DataSession(object):
         :return: is allowed or not to access, error message
         """
         url = settings.HOST + "card/access/"
-        rsp = requests.post(url, json={"card_id": uid}, headers={"Authorization": "JWT " + self.token})
-        logging.debug("Response of {method} {url}: {rsp}".format(method="POST", url=url, rsp=rsp.text))
-        result = rsp.status_code == 200
+        try:
+            rsp = requests.post(url, json={"card_id": uid}, headers={"Authorization": "JWT " + self.token}, timeout=0.5)
+            logging.debug("Response of {method} {url}: {rsp}".format(method="POST", url=url, rsp=rsp.text))
+            result = rsp.status_code == 200
+        except:
+            result = uid in self.access_log
+            print(self.access_log)
+            logging.debug("local access {result}".format(result="accepted" if result else "denied"))
         if result:
             self.access_log[uid] = datetime.now()
             if len(self.access_log) > self.RECENT_ACCESS_LOG_CACHE_MAX_LENGTH:
@@ -61,7 +66,7 @@ class DataSession(object):
         :return: info dict of the student
         """
         url = settings.HOST + "card/"
-        rsp = requests.get(url, params={"card_id": uid}, headers={"Authorization": "JWT " + self.token})
+        rsp = requests.get(url, params={"card_id": uid}, headers={"Authorization": "JWT " + self.token}, timeout=1)
         logging.debug("Response of {method} {url}: {rsp}".format(method="GET", url=url, rsp=rsp.text))
         results = rsp.json()["results"]
         if len(results) > 0:

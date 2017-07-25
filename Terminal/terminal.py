@@ -141,7 +141,10 @@ class Terminal(object):
     def card_arrival_handler(self, uid):
         logging.debug("Card +{uid}+ arrived.".format(uid=uid))
         self.uid = uid
-        self.refresh_status()
+        try:
+            self.refresh_status()
+        except:
+            pass
         self.query_access()
         # self.card_communicator.send("SMALLMONEY " + "25641719 1187033378")
         self.card_communicator.send("SMALLQUERY")
