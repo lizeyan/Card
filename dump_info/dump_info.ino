@@ -91,6 +91,8 @@ void setup() {
  * Main loop.
  */
 void loop() {
+    delay(10);
+    ledTime += 10;
 
     if(ledTime > 999)
     {
@@ -105,6 +107,8 @@ void loop() {
         if(cardStatus == 1)
         {
             Serial.println("LEAVE");
+            digitalWrite(greenLed,LOW);
+            digitalWrite(redLed,LOW);
             cardStatus = 0;
         }
         return;
