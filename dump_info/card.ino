@@ -58,25 +58,13 @@ void setup() {
     mfrc522.PCD_Init(); // Init MFRC522 card
 
     // Prepare the key (used both as key A and as key B)
-    // using FFFFFFFFFFFFh which is the default at chip delivery from the factory
 
-//    for (byte i = 0; i < 6; i++) {
-//        key.keyByte[i] = 0xFF;
-//    }
       key.keyByte[0] = 0x4E; // 0x4E, 0x55, 0x87, 0xB8, 0x13, 0xDF
       key.keyByte[1] = 0x55;
       key.keyByte[2] = 0x87;
       key.keyByte[3] = 0xB8;
       key.keyByte[4] = 0x13;
-      key.keyByte[5] = 0xDF;
-
-//      key.keyByte[0] = 0x00; // 0x4E, 0x55, 0x87, 0xB8, 0x13, 0xDF
-//      key.keyByte[1] = 0x00;
-//      key.keyByte[2] = 0x00;
-//      key.keyByte[3] = 0x00;
-//      key.keyByte[4] = 0x00;
-//      key.keyByte[5] = 0x00;
-      
+      key.keyByte[5] = 0xDF;    
 
     Serial.println(F("Scan a MIFARE Classic PICC to demonstrate read and write."));
     Serial.print(F("Using key (for A and B):"));
@@ -87,9 +75,6 @@ void setup() {
     command = "";
 }
 
-/**
- * Main loop.
- */
 void loop() {
     delay(10);
     ledTime += 10;
