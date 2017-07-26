@@ -24,7 +24,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = '(ys&i4=dly=8$fzt-6odqmpfkkh@(c7wqp^m0$iltcy+8!1gaw'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ["123.206.211.84", "card.lizeyan.me"]
 
@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    "django_filters",
     'corsheaders',
     'rest_framework.authtoken',
     'card.apps.CardConfig',
