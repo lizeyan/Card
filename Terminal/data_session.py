@@ -45,7 +45,7 @@ class DataSession(object):
         """
         url = settings.HOST + "card/access/"
         try:
-            rsp = requests.post(url, json={"card_id": uid}, headers={"Authorization": "JWT " + self.token}, timeout=0.5, verify=False)
+            rsp = requests.post(url, json={"card_id": uid}, params={"jwt": self.token}, timeout=0.5, verify=False)
             logging.debug("Response of {method} {url}: {rsp}".format(method="POST", url=url, rsp=rsp.text))
             result = rsp.status_code == 200
         except:
@@ -66,7 +66,7 @@ class DataSession(object):
         :return: info dict of the student
         """
         url = settings.HOST + "card/"
-        rsp = requests.get(url, params={"card_id": uid}, headers={"Authorization": "JWT " + self.token}, timeout=1, verify=False)
+        rsp = requests.get(url, params={"card_id": uid, "jwt": self.token}, timeout=1, verify=False)
         logging.debug("Response of {method} {url}: {rsp}".format(method="GET", url=url, rsp=rsp.text))
         results = rsp.json()["results"]
         if len(results) > 0:
@@ -80,26 +80,26 @@ class DataSession(object):
         :return: info dict of the student
         """
         url = settings.HOST + "card/"
-        rsp = requests.get(url, params={"student_id": student_id}, headers={"Authorization": "JWT " + self.token}, verify=False)
+        rsp = requests.get(url, params={"student_id": student_id, "jwt": self.token}, verify=False)
         logging.debug("Response of {method} {url}: {rsp}".format(method="GET", url=url, rsp=rsp.text))
         return rsp.json()["results"][0]
 
     def increase_money(self, uid, money):
         url = settings.HOST + "card/increase_money/"
-        rsp = requests.post(url, json={"card_id": uid, "money": money}, headers={"Authorization": "JWT " + self.token}, verify=False)
+        rsp = requests.post(url, json={"card_id": uid, "money": money}, params={"jwt": self.token}, verify=False)
         logging.debug("Response of {method} {url}: {rsp}".format(method="POST", url=url, rsp=rsp.text))
         return rsp.json()
 
     def decrease_money(self, uid, money):
         url = settings.HOST + "card/decrease_money/"
-        rsp = requests.post(url, json={"card_id": uid, "money": money}, headers={"Authorization": "JWT " + self.token}, verify=False)
+        rsp = requests.post(url, json={"card_id": uid, "money": money}, params={"jwt": self.token}, verify=False)
         logging.debug("Response of {method} {url}: {rsp}".format(method="POST", url=url, rsp=rsp.text))
         return rsp.json()
 
     def put_card(self, uid: str, url: str = "", data: dict=None):
         if url == "":
             url = self.query_card_by_uid(uid)["url"]
-        rsp = requests.put(url, data=data, headers={"Authorization": "JWT " + self.token}, verify=False)
+        rsp = requests.put(url, data=data, params={"jwt": self.token}, verify=False)
         logging.debug("Response of {method} {url} {data}: {rsp}".format(method="PUT", url=url, rsp=rsp.text, data=data))
         return rsp.json()
 
@@ -107,14 +107,13 @@ class DataSession(object):
         if url == "":
             url = self.query_card_by_uid(uid)["url"]
         payload = {"card_id": None}
-        rsp = requests.put(url, data=json.dumps(payload), headers={"Authorization": "JWT " + self.token,
-                                                                   'content-type': 'application/json'}, verify=False)
+        rsp = requests.put(url, data=json.dumps(payload), params={"jwt": self.token}, headers={'content-type': 'application/json'}, verify=False)
         logging.debug("Response of {method} {url} : {rsp}".format(method="PUT", url=url, rsp=rsp.text))
         return rsp.json()
 
     def create_card(self, student_id: str, uid: str):
         url = self.query_card_by_student_id(student_id)["url"]
-        rsp = requests.put(url, data={"card_id": uid}, headers={"Authorization": "JWT " + self.token}, verify=False)
+        rsp = requests.put(url, data={"card_id": uid}, params={"jwt": self.token}, verify=False)
         logging.debug("Response of {method} {url} : {rsp}".format(method="PUT", url=url, rsp=rsp.text))
         return rsp.json()
 

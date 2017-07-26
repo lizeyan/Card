@@ -152,7 +152,7 @@ def increase_money(request):
         log = Log(action='increase_money', username=request.user.username, card_id=card_id, info=info)
         log.save()
         responseMess = {'status': 'success', 'now_money': new_money}
-        return  JSONResponse(responseMess, status=200)
+        return SONResponse(responseMess, status=200)
     except:
         responseMess = {'status': 'INPUT_STYLE_ERROR'}
         return JSONResponse(responseMess, status=400)
