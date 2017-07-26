@@ -15,8 +15,9 @@ Including another URLconf
 """
 from django.conf.urls import url, include
 from django.contrib import admin
+from django.conf.urls.static import static
 from rest_framework_jwt.views import obtain_jwt_token, refresh_jwt_token, verify_jwt_token
-
+from CardBackend import settings
 from card import views
 from card.urls import router
 
@@ -28,4 +29,4 @@ urlpatterns = [
     url(r'^register/$', views.do_register),
     url(r'^card/', include('card.urls')),
     url(r'^', include(router.urls)),
-]
+] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT, show_indexes=True)

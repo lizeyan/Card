@@ -84,10 +84,10 @@ DATABASES = {
         # 'ENGINE': 'django.db.backends.sqlite3',
         # 'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'CardBackend',
-        'USER': 'root',
-        'PASSWORD': 'lvx',
-        'HOST': '123.207.163.49',
+        'NAME': 'cardbackend',
+        'USER': 'card',
+        'PASSWORD': 'glgjssy+1s',
+        'HOST': 'localhost',
         'PORT': '',
     }
 }
@@ -176,3 +176,4 @@ USE_TZ = False
 # https://docs.djangoproject.com/en/1.10/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, "static")
