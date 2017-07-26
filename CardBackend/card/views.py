@@ -16,6 +16,7 @@ from card.serializers import UserSerializer, CardSerializer, LogSerializer
 from django.db import IntegrityError
 from card.interface import JSONResponse
 from datetime import timedelta, datetime
+from card.auth import JSONWebTokenAuthenticationQS
 
 
 class UserViewSet(viewsets.ReadOnlyModelViewSet):
@@ -47,7 +48,7 @@ class CardViewSet(viewsets.ModelViewSet):
 
 @csrf_exempt
 @api_view(['POST'])
-@authentication_classes((SessionAuthentication, BasicAuthentication, JSONWebTokenAuthentication))
+@authentication_classes((SessionAuthentication, BasicAuthentication, JSONWebTokenAuthentication, JSONWebTokenAuthenticationQS))
 @permission_classes((IsAuthenticated, OnlySuperUserPermission,))
 def do_register(request):
     """
@@ -86,7 +87,7 @@ def do_register(request):
 
 @csrf_exempt
 @api_view(['POST'])
-@authentication_classes((SessionAuthentication, BasicAuthentication, JSONWebTokenAuthentication))
+@authentication_classes((SessionAuthentication, BasicAuthentication, JSONWebTokenAuthentication, JSONWebTokenAuthenticationQS))
 @permission_classes((IsAuthenticated, DecreasePermission,))
 def decrease_money(request):
     """
@@ -124,7 +125,7 @@ def decrease_money(request):
 
 @csrf_exempt
 @api_view(['POST'])
-@authentication_classes((SessionAuthentication, BasicAuthentication, JSONWebTokenAuthentication))
+@authentication_classes((SessionAuthentication, BasicAuthentication, JSONWebTokenAuthentication, JSONWebTokenAuthenticationQS))
 @permission_classes((IsAuthenticated, IncreasePermission,))
 def increase_money(request):
     """
@@ -159,7 +160,7 @@ def increase_money(request):
 
 @csrf_exempt
 @api_view(['POST'])
-@authentication_classes((SessionAuthentication, BasicAuthentication, JSONWebTokenAuthentication))
+@authentication_classes((SessionAuthentication, BasicAuthentication, JSONWebTokenAuthentication, JSONWebTokenAuthenticationQS))
 @permission_classes((IsAuthenticated, AccessPermission,))
 def access(request):
     """
