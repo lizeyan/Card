@@ -197,6 +197,7 @@ class Terminal(object):
             return
         self.data_session.increase_money(self.uid, self.delta_amount.get())
         self.refresh_status()
+        self.card_communicator.send("APPENDLOG {timestamp} 1 {amount} {location}".format(timestamp=int(datetime.now().timestamp()), amount=int(self.delta_amount.get() * 100), location="TEST_LOCATION"))
         self.status_string.set(u"Recharge ￥{amount}".format(amount=self.delta_amount.get()))
 
     def card_consume(self):
@@ -299,7 +300,11 @@ class Terminal(object):
         popup = Tk()
         popup.title("Logs")
         for idx, log in enumerate(logs):
-            Label(popup, text=log, font=self.custom_font).grid(row=idx, column=0)
+            log_params = log.split(" ")
+            log_params[0] = datetime.fromtimestamp(eval(log_params[0])).isoformat()
+            log_params[1] = "recharge" if log_params[1] == '1' else 'consume '
+            log_params[2] = log_params[2][:-2] + '.' + log_params[2][-2:]
+            Label(popup, text=" ".join(log_params), font=self.custom_font).grid(row=idx, column=0)
 
 
 if __name__ == '__main__':
