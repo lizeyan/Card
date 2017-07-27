@@ -238,13 +238,17 @@ void loop() {
     
     
     byte blockAddrNow = 0;
-    AuthenticateA(blockAddrNowAddr);
-    status = (MFRC522::StatusCode) mfrc522.MIFARE_Read(blockAddrNowAddr, buffer, &size);
-        if (status != MFRC522::STATUS_OK) {
-            Serial.print(F("MIFARE_Read() failed: "));
-            Serial.println(mfrc522.GetStatusCodeName(status));
-        }
-    blockAddrNow = buffer[0];
+    if(!commandName.equals("MAKENEWCARD") && !commandName.equals("SHOW"))
+    {
+        AuthenticateA(blockAddrNowAddr);
+        
+        status = (MFRC522::StatusCode) mfrc522.MIFARE_Read(blockAddrNowAddr, buffer, &size);
+            if (status != MFRC522::STATUS_OK) {
+                Serial.print(F("MIFARE_Read() failed: "));
+                Serial.println(mfrc522.GetStatusCodeName(status));
+            }
+        blockAddrNow = buffer[0];
+    }
 
     
     byte dataBlock[]    = {
@@ -699,14 +703,14 @@ void resetCard()
     status = (MFRC522::StatusCode) mfrc522.PCD_Authenticate(MFRC522::PICC_CMD_MF_AUTH_KEY_A, 36, &defaultkey, &(mfrc522.uid));
     if (status != MFRC522::STATUS_OK) 
     {
-        Serial.print(F("PCD_Authenticate() failed: "));
+        Serial.print(F("SMALL MONEY PCD_Authenticate() A failed: "));
         Serial.println(mfrc522.GetStatusCodeName(status));
         return;
     }    
     status = (MFRC522::StatusCode) mfrc522.PCD_Authenticate(MFRC522::PICC_CMD_MF_AUTH_KEY_B, 36, &defaultkey, &(mfrc522.uid));
     if (status != MFRC522::STATUS_OK) 
     {
-        Serial.print(F("PCD_Authenticate() failed: "));
+        Serial.print(F("SMALL MONEY PCD_Authenticate() B failed: "));
         Serial.println(mfrc522.GetStatusCodeName(status));
         return;
     }
@@ -721,14 +725,14 @@ void resetCard()
         status = (MFRC522::StatusCode) mfrc522.PCD_Authenticate(MFRC522::PICC_CMD_MF_AUTH_KEY_A, i, &defaultkey, &(mfrc522.uid));
         if (status != MFRC522::STATUS_OK) 
         {
-            Serial.print(F("PCD_Authenticate() failed: "));
+            Serial.print(F("PCD_Authenticate() A failed: "));
             Serial.println(mfrc522.GetStatusCodeName(status));
             return;
         }    
         status = (MFRC522::StatusCode) mfrc522.PCD_Authenticate(MFRC522::PICC_CMD_MF_AUTH_KEY_B, i, &defaultkey, &(mfrc522.uid));
         if (status != MFRC522::STATUS_OK) 
         {
-            Serial.print(F("PCD_Authenticate() failed: "));
+            Serial.print(F("PCD_Authenticate() B failed: "));
             Serial.println(mfrc522.GetStatusCodeName(status));
             return;
         }

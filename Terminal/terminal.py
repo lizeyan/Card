@@ -97,7 +97,7 @@ class Terminal(object):
         Label(self.main_frame, textvariable=self.small_wallet_money, font=self.custom_font, width=20).grid(row=5,
                                                                                                            column=1)
 
-        Label(self.main_frame, textvariable=self.status_string, font=self.custom_font, width=20 + 15).grid(row=9,
+        Label(self.main_frame, textvariable=self.status_string, font=self.custom_font, width=20 + 15).grid(row=10,
                                                                                                            column=0,
                                                                                                            columnspan=2)
 
