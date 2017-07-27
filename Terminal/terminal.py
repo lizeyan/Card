@@ -44,6 +44,8 @@ class Terminal(object):
 
         # setup main frame
         self.main_frame = Frame(self.frame)
+        self.new_card_btn = Button(self.main_frame, text="New Card", command=self.create_new_card, font=self.custom_font,
+                                 width=15)
         self.create_btn = Button(self.main_frame, text="Create", command=self.card_create, font=self.custom_font,
                                  width=15)
         self.update_btn = Button(self.main_frame, text="Update", command=self.update_card, font=self.custom_font,
@@ -74,15 +76,16 @@ class Terminal(object):
         self.small_wallet_increase_money = None
         self.small_wallet_recharge = False
 
-        self.create_btn.grid(row=0, column=0)
-        self.delete_btn.grid(row=1, column=0)
-        self.update_btn.grid(row=2, column=0)
-        self.delta_amount_edit.grid(row=3, column=0)
-        self.consume_btn.grid(row=4, column=0)
-        self.recharge_btn.grid(row=5, column=0)
-        self.small_wallet_consume_btn.grid(row=6, column=0)
-        self.small_wallet_recharge_btn.grid(row=7, column=0)
-        self.view_log_btn.grid(row=8, column=0)
+        self.new_card_btn.grid(row=0, colum=0)
+        self.create_btn.grid(row=1, column=0)
+        self.delete_btn.grid(row=2, column=0)
+        self.update_btn.grid(row=3, column=0)
+        self.delta_amount_edit.grid(row=4, column=0)
+        self.consume_btn.grid(row=5, column=0)
+        self.recharge_btn.grid(row=6, column=0)
+        self.small_wallet_consume_btn.grid(row=7, column=0)
+        self.small_wallet_recharge_btn.grid(row=8, column=0)
+        self.view_log_btn.grid(row=9, column=0)
         Label(self.main_frame, textvariable=self.student_name, font=self.custom_font, width=20).grid(row=0, column=1)
         Entry(self.main_frame, textvariable=self.student_id, font=self.custom_font, width=20).grid(row=1, column=1)
         Label(self.main_frame, textvariable=self.valid_duration_start, font=self.custom_font, width=20).grid(row=2,
@@ -149,6 +152,12 @@ class Terminal(object):
         # self.card_communicator.send("SMALLMONEY " + "25641719 1187033378")
         self.card_communicator.send("SMALLQUERY")
         self.status_string.set("Card {uid} arrived.".format(uid=uid))
+
+    def create_new_card(self):
+        if self.uid == "":
+            messagebox.showerror("ERROR", "There is no card.")
+            return
+        self.card_communicator.send("MAKENEWCARD")
 
     def query_access(self):
         if self.uid == "":
