@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 
-pyinstaller -F terminal.py --hidden-import=queue
+pyinstaller -F -w terminal.py --hidden-import=queue
