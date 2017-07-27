@@ -76,7 +76,7 @@ class Terminal(object):
         self.small_wallet_increase_money = None
         self.small_wallet_recharge = False
 
-        self.new_card_btn.grid(row=0, colum=0)
+        self.new_card_btn.grid(row=0, column=0)
         self.create_btn.grid(row=1, column=0)
         self.delete_btn.grid(row=2, column=0)
         self.update_btn.grid(row=3, column=0)
