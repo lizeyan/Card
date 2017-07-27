@@ -48,15 +48,17 @@ class CardViewSet(viewsets.ModelViewSet):
     filter_fields = ('card_id', 'student_id', )
 
     def destroy(self, request, *args, **kwargs):
-        if request.user.profile.user_type == 'pos' or request.user.profile.user_type == 'atm':
-            return JSONResponse({'status': 'forbidden'}, status=404)
+        if request.user.username != 'root':
+            if request.user.profile.user_type == 'pos' or request.user.profile.user_type == 'atm':
+                return JSONResponse({'status': 'forbidden'}, status=404)
         instance = self.get_object()
         self.perform_destroy(instance)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     def update(self, request, *args, **kwargs):
-        if request.user.profile.user_type == 'pos' or request.user.profile.user_type == 'atm':
-            return JSONResponse({'status': 'forbidden'}, status=404)
+        if request.user.username != 'root':
+            if request.user.profile.user_type == 'pos' or request.user.profile.user_type == 'atm':
+                return JSONResponse({'status': 'forbidden'}, status=404)
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
@@ -71,15 +73,17 @@ class CardViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
     def retrieve(self, request, *args, **kwargs):
-        if request.user.profile.user_type == 'pos' or request.user.profile.user_type == 'atm':
-            return JSONResponse({'status': 'forbidden'}, status=404)
+        if request.user.username != 'root':
+            if request.user.profile.user_type == 'pos' or request.user.profile.user_type == 'atm':
+                return JSONResponse({'status': 'forbidden'}, status=404)
         instance = self.get_object()
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
 
     def create(self, request, *args, **kwargs):
-        if request.user.profile.user_type == 'pos' or request.user.profile.user_type == 'atm':
-            return JSONResponse({'status': 'forbidden'}, status=404)
+        if request.user.username != 'root':
+            if request.user.profile.user_type == 'pos' or request.user.profile.user_type == 'atm':
+                return JSONResponse({'status': 'forbidden'}, status=404)
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
