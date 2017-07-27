@@ -32,11 +32,13 @@
 
 ### 3.网络后台
 
-​	1.使用比较成熟的Django REST framework框架来进行后台的搭建，最大程度的避免了后台被攻击的可能。
+​	1.使用比较成熟的Django REST framework框架来进行后台的搭建，最大程度的避免了后台被攻击的可能。关于Django的安全性，可以参考[Security in Django](https://docs.djangoproject.com/en/1.11/topics/security/)
 
-​	2.各种终端的认证采用token认证，这样不对密码进行明文传输，保证了密码的安全。
+​	2.使用端口白名单机制，只开放http，https，ssh等少量必要的端口。ssh禁止密码登录，进一步提高了安全性。
 
-​	3.对于不同的终端，拥有不同的权限（具体见系统设计——网络后台）。
+​	3.各种终端的认证采用token认证，这样不对密码进行明文传输，保证了密码的安全。
+
+​	4.对于不同的终端，拥有不同的权限（具体见系统设计——网络后台）。
 
 ### 4.终端与后台的交互
 
@@ -149,9 +151,21 @@
 
 ### 后台的部署
 
+- 服务器版本： Apache/2.4.18 (Ubuntu)
+- 服务器地址： card.lizeyan.me
+- 防火墙设置： 
+  - 入站: TCP:22 TCP:80 TCP:443
+  - 出站: All
+
 ### 终端的打包与运行
 
+使用pyinstaller打包为单个文件，可从 [terminal.exe for win32](https://download.lizeyan.me/programs/Card-terminal/terminal.exe)下载
+
+直接双击运行即可
+
 ### 终端运行测试
+
+#### 登录
 
 #### 创建新卡
 
