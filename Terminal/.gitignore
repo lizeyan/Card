@@ -2,3 +2,6 @@
 *.log
 __pycache__/
 *.pkl
+build/
+dist/
+terminal.spec
