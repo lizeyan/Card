@@ -27,7 +27,7 @@ class DataSession(object):
         """
         :param user_name:
         :param password:
-        :return: token. empty string if authentication failed.
+        :return: token. empty string if authentication failed
         """
         url = settings.HOST + "api-token-auth/"
         rsp = requests.post(url, data={"username": user_name, "password": password}, verify=False)
@@ -48,16 +48,17 @@ class DataSession(object):
             rsp = requests.post(url, json={"card_id": uid}, params={"jwt": self.token}, timeout=0.5, verify=False)
             logging.debug("Response of {method} {url}: {rsp}".format(method="POST", url=url, rsp=rsp.text))
             result = rsp.status_code == 200
+            if result:
+                self.access_log[uid] = datetime.now()
+                while len(self.access_log) > self.RECENT_ACCESS_LOG_CACHE_MAX_LENGTH:
+                    items = sorted(self.access_log.items(), key=lambda item: item[1])
+                    del self.access_log[items[0]]
         except:
+            for k, v in self.access_log.items():
+                if (datetime.now() - v).total_seconds() > 86400:
+                    del self.access_log[k]
             result = uid in self.access_log
-            print(self.access_log)
             logging.debug("local access {result}".format(result="accepted" if result else "denied"))
-        if result:
-            self.access_log[uid] = datetime.now()
-            if len(self.access_log) > self.RECENT_ACCESS_LOG_CACHE_MAX_LENGTH:
-                for k, v in self.access_log.items():
-                    if (datetime.now() - v).total_seconds() > 86400:
-                        del self.access_log[k]
         return result
 
     def query_card_by_uid(self, uid: str) -> dict:
