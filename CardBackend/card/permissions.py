@@ -28,5 +28,6 @@ class DecreasePermission(permissions.BasePermission):
 
 class RegisterPermission(permissions.BasePermission):
     def has_permission(self, request, view):
-        return request.user.is_superuser == 1 or request.user.profile.user_type == 'register' or  request.user.profile.user_type == 'pos' or request.user.profile.user_type == 'atm'
+        return request.user.is_superuser == 1 or request.user.profile.user_type == 'register' \
+               or request.user.profile.user_type == 'pos' or request.user.profile.user_type == 'atm'
 
