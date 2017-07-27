@@ -279,6 +279,7 @@ class Terminal(object):
             messagebox.showerror("ERROR", "There is no card.")
             return
         self.data_session.delete_card(self.uid, self.student_info["url"])
+        self.card_communicator.send("DELETE")
         self.refresh_status()
         self.status_string.set("Delete Card {uid}".format(uid=self.uid))
 
