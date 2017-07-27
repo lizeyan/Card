@@ -1,4 +1,3 @@
-Crypto
+pycrypto
 requests
-simplecrypt
-serial
+pyserial
