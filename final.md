@@ -171,6 +171,31 @@
   - 入站: TCP:22 TCP:80 TCP:443
   - 出站: All
 
+配置脚本：
+
+```xml
+<VirtualHost *:443>
+    ServerName card.lizeyan.me:443
+
+    WSGIScriptAlias / /home/lizeyan/Card/CardBackend/CardBackend/wsgi.py
+    WSGIDaemonProcess card python-path=/home/lizeyan/Card/CardBackend
+    WSGIProcessGroup card
+
+    SSLEngine on
+    SSLCertificateFile /etc/apache2/ssl/card.lizeyan.me.crt
+    SSLCertificateKeyFile /etc/apache2/ssl/card.lizeyan.me.key
+
+    <Directory "/home/lizeyan/Card/CardBackend/CardBackend">
+        Require all granted
+    <Files "wsgi.py">
+        Require all granted
+    </Files>
+    </Directory>
+</VirtualHost>
+```
+
+
+
 ### 终端的打包与运行
 
 python本身的运行是解释性的，源码会暴露出来。所以我们使用pyinstaller将桌面终端打包为单个二进制文件，可从 [terminal.exe for win32](https://download.lizeyan.me/programs/Card-terminal/terminal.exe)下载
